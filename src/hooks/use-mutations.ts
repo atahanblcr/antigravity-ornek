@@ -4,10 +4,10 @@ import { useToast } from "@/components/ui/toast"
 import { useRouter } from "next/navigation"
 
 const getSupabase = () => {
-    return createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    if (!url || !key) throw new Error("Supabase credentials not configured")
+    return createBrowserClient(url, key)
 }
 
 /**
@@ -18,7 +18,7 @@ export async function uploadProductImage(file: File, tenantId: string) {
     const fileExt = file.name.split('.').pop()
     const fileName = `${tenantId}/${Math.random().toString(36).substring(2)}.${fileExt}`
 
-    const { error: uploadError, data } = await supabase.storage
+    const { error: uploadError } = await supabase.storage
         .from('products')
         .upload(fileName, file)
 
@@ -31,9 +31,25 @@ export async function uploadProductImage(file: File, tenantId: string) {
     return publicUrl
 }
 
+// ============================================
+// ÜRÜN MUTATIONS
+// ============================================
+
+interface ProductData {
+    name: string
+    slug: string
+    description?: string
+    base_price: number
+    sale_price?: number | null
+    category_id?: string
+    sku?: string
+    image_url?: string
+    attributes?: Record<string, string>
+    is_active?: boolean
+}
+
 /**
  * Ürün Oluşturma Mutasyonu
- * Reference.md Bölüm 7.2 - Veri Mutasyonları
  */
 export function useCreateProduct() {
     const queryClient = useQueryClient()
@@ -41,7 +57,7 @@ export function useCreateProduct() {
     const router = useRouter()
 
     return useMutation({
-        mutationFn: async ({ data, imageFile, tenantId }: { data: any, imageFile?: File, tenantId: string }) => {
+        mutationFn: async ({ data, imageFile, tenantId }: { data: ProductData; imageFile?: File; tenantId: string }) => {
             const supabase = getSupabase()
 
             let imageUrl = null
@@ -68,10 +84,93 @@ export function useCreateProduct() {
             addToast("Ürün başarıyla oluşturuldu", "success")
             router.push("/dashboard/products")
         },
-        onError: (error: any) => {
+        onError: (error: Error) => {
             addToast(`Hata: ${error.message}`, "error")
         }
     })
+}
+
+/**
+ * Ürün Güncelleme Mutasyonu
+ */
+export function useUpdateProduct() {
+    const queryClient = useQueryClient()
+    const { addToast } = useToast()
+    const router = useRouter()
+
+    return useMutation({
+        mutationFn: async ({ id, data, imageFile, tenantId }: { id: string; data: Partial<ProductData>; imageFile?: File; tenantId: string }) => {
+            const supabase = getSupabase()
+
+            let updateData = { ...data }
+
+            if (imageFile) {
+                updateData.image_url = await uploadProductImage(imageFile, tenantId)
+            }
+
+            const { data: product, error } = await supabase
+                .from("products")
+                .update(updateData)
+                .eq("id", id)
+                .select()
+                .single()
+
+            if (error) throw error
+            return product
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["products"] })
+            addToast("Ürün başarıyla güncellendi", "success")
+            router.push("/dashboard/products")
+        },
+        onError: (error: Error) => {
+            addToast(`Hata: ${error.message}`, "error")
+        }
+    })
+}
+
+/**
+ * Ürün Silme Mutasyonu (Soft Delete)
+ */
+export function useDeleteProduct() {
+    const queryClient = useQueryClient()
+    const { addToast } = useToast()
+
+    return useMutation({
+        mutationFn: async (productId: string) => {
+            const supabase = getSupabase()
+
+            // Soft delete - Reference.md Bölüm 8.2
+            const { error } = await supabase
+                .from("products")
+                .update({ deleted_at: new Date().toISOString(), is_active: false })
+                .eq("id", productId)
+
+            if (error) throw error
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["products"] })
+            addToast("Ürün başarıyla silindi", "success")
+        },
+        onError: (error: Error) => {
+            addToast(`Hata: ${error.message}`, "error")
+        }
+    })
+}
+
+// ============================================
+// KATEGORİ MUTATIONS
+// ============================================
+
+interface CategoryData {
+    name: string
+    slug: string
+    description?: string
+    image_url?: string
+    parent_id?: string
+    sort_order?: number
+    is_active?: boolean
+    attribute_schema?: Array<{ key: string; type: string; options?: string[]; required?: boolean }>
 }
 
 /**
@@ -83,7 +182,7 @@ export function useCreateCategory() {
     const router = useRouter()
 
     return useMutation({
-        mutationFn: async ({ data, tenantId }: { data: any, tenantId: string }) => {
+        mutationFn: async ({ data, tenantId }: { data: CategoryData; tenantId: string }) => {
             const supabase = getSupabase()
 
             const { data: category, error } = await supabase
@@ -103,8 +202,71 @@ export function useCreateCategory() {
             addToast("Kategori başarıyla oluşturuldu", "success")
             router.push("/dashboard/categories")
         },
-        onError: (error: any) => {
+        onError: (error: Error) => {
             addToast(`Hata: ${error.message}`, "error")
         }
     })
 }
+
+/**
+ * Kategori Güncelleme Mutasyonu
+ */
+export function useUpdateCategory() {
+    const queryClient = useQueryClient()
+    const { addToast } = useToast()
+    const router = useRouter()
+
+    return useMutation({
+        mutationFn: async ({ id, data }: { id: string; data: Partial<CategoryData> }) => {
+            const supabase = getSupabase()
+
+            const { data: category, error } = await supabase
+                .from("categories")
+                .update(data)
+                .eq("id", id)
+                .select()
+                .single()
+
+            if (error) throw error
+            return category
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["categories"] })
+            addToast("Kategori başarıyla güncellendi", "success")
+            router.push("/dashboard/categories")
+        },
+        onError: (error: Error) => {
+            addToast(`Hata: ${error.message}`, "error")
+        }
+    })
+}
+
+/**
+ * Kategori Silme Mutasyonu (Soft Delete)
+ */
+export function useDeleteCategory() {
+    const queryClient = useQueryClient()
+    const { addToast } = useToast()
+
+    return useMutation({
+        mutationFn: async (categoryId: string) => {
+            const supabase = getSupabase()
+
+            // Soft delete
+            const { error } = await supabase
+                .from("categories")
+                .update({ deleted_at: new Date().toISOString(), is_active: false })
+                .eq("id", categoryId)
+
+            if (error) throw error
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["categories"] })
+            addToast("Kategori başarıyla silindi", "success")
+        },
+        onError: (error: Error) => {
+            addToast(`Hata: ${error.message}`, "error")
+        }
+    })
+}
+

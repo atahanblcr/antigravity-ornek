@@ -103,7 +103,8 @@ export default async function StorefrontPage({ params }: { params: Promise<{ ten
             <StorefrontHeader
                 name={tenant?.name || resolvedParams.tenant}
                 slug={resolvedParams.tenant}
-                whatsappNumber={tenant?.whatsapp_number}
+                tenantId={tenant?.id || ""}
+                whatsappNumber={tenant?.whatsapp_number || ""}
             />
 
             <main className="container px-4 py-6 space-y-8">
@@ -136,7 +137,7 @@ export default async function StorefrontPage({ params }: { params: Promise<{ ten
 
                     {featuredProducts && featuredProducts.length > 0 ? (
                         <HorizontalScrollList>
-                            <FeaturedProducts products={featuredProducts as Product[]} />
+                            <FeaturedProducts products={featuredProducts as Product[]} tenantSlug={resolvedParams.tenant} />
                         </HorizontalScrollList>
                     ) : (
                         <div className="text-center py-8 text-muted-foreground bg-muted/30 rounded-lg">

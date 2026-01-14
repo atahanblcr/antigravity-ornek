@@ -4,10 +4,12 @@ import * as React from "react"
 import Image from "next/image"
 import { Store, MapPin, Phone, ExternalLink } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { CartDrawer } from "@/components/storefront/cart-drawer"
 
 interface StorefrontHeaderProps {
     name: string
     slug: string
+    tenantId: string
     logoUrl?: string
     description?: string
     whatsappNumber: string
@@ -16,12 +18,13 @@ interface StorefrontHeaderProps {
 
 /**
  * Storefront Header Bileşeni
- * Mağaza bilgileri ve logo
+ * Mağaza bilgileri, logo ve sepet
  * Glassmorphism estetiği
  */
 export const StorefrontHeader = ({
     name,
     slug,
+    tenantId,
     logoUrl,
     description,
     whatsappNumber,
@@ -87,7 +90,14 @@ export const StorefrontHeader = ({
                             </div>
                         </div>
 
-                        {/* Paylaş Butonu - onClick ile hydration mismatch önlenir */}
+                        {/* Sepet Drawer */}
+                        <CartDrawer
+                            storeName={name}
+                            phoneNumber={whatsappNumber}
+                            tenantId={tenantId}
+                        />
+
+                        {/* Paylaş Butonu */}
                         <Button
                             variant="outline"
                             size="icon"

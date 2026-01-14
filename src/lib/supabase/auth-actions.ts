@@ -13,16 +13,22 @@ import { redirect } from "next/navigation"
 // Sunucu tarafı Supabase client
 async function getSupabase() {
     const cookieStore = await cookies()
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+    if (!url || !key) {
+        throw new Error("Supabase credentials not configured")
+    }
 
     return createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        url,
+        key,
         {
             cookies: {
                 getAll() {
                     return cookieStore.getAll()
                 },
-                setAll(cookiesToSet) {
+                setAll(cookiesToSet: Array<{ name: string; value: string; options?: Record<string, unknown> }>) {
                     try {
                         cookiesToSet.forEach(({ name, value, options }) =>
                             cookieStore.set(name, value, options)
@@ -69,10 +75,20 @@ export async function register(formData: FormData) {
     const storeSlug = formData.get("storeSlug") as string
     const whatsappNumber = formData.get("whatsappNumber") as string
 
-    // 1. Önce tenant oluştur (admin client ile)
+    // Service Role Key kontrolü
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+    if (!supabaseUrl || !anonKey) {
+        return { error: "Supabase yapılandırılmamış" }
+    }
+
+    // 1. Önce tenant oluştur (admin veya anon client ile)
+    // NOT: Anon client kullanılıyorsa RLS tenants tablosunda INSERT izni olmalı
     const adminSupabase = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY!
+        supabaseUrl,
+        serviceRoleKey || anonKey // Service role yoksa anon key kullan
     )
 
     const { data: tenant, error: tenantError } = await adminSupabase

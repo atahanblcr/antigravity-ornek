@@ -8,7 +8,9 @@ export interface Tenant {
     id: string
     name: string
     slug: string
+    description?: string
     whatsapp_number: string
+    location?: string
     logo_url?: string
     settings: TenantSettings
     is_active: boolean
@@ -35,6 +37,14 @@ export interface Profile {
     updated_at: string
 }
 
+// Kategori Özellik Şeması
+export interface AttributeSchema {
+    key: string
+    type: "text" | "select" | "number"
+    options?: string[]
+    required?: boolean
+}
+
 // Kategori
 export interface Category {
     id: string
@@ -46,6 +56,7 @@ export interface Category {
     parent_id?: string
     sort_order: number
     is_active: boolean
+    attribute_schema?: AttributeSchema[]
     deleted_at?: string
     created_at: string
     updated_at: string
@@ -57,6 +68,7 @@ export interface Product {
     tenant_id: string
     category_id?: string
     name: string
+    slug: string
     description?: string
     base_price: number
     sale_price?: number

@@ -1,16 +1,70 @@
-"use client"
-
 import * as React from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Store, Save } from "lucide-react"
+import { cookies } from "next/headers"
+import { createServerClient } from "@supabase/ssr"
+import { SettingsForm } from "./settings-form"
+import type { Tenant } from "@/types"
 
 /**
- * Mağaza Ayarları Sayfası
+ * Mağaza Ayarları Sayfası (Server Component)
  */
-export default function SettingsPage() {
+export default async function SettingsPage() {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+    if (!supabaseUrl || !supabaseAnonKey) {
+        return (
+            <div className="p-8 text-center text-muted-foreground">
+                Supabase yapılandırılmamış
+            </div>
+        )
+    }
+
+    const cookieStore = await cookies()
+    const supabase = createServerClient(
+        supabaseUrl,
+        supabaseAnonKey,
+        {
+            cookies: {
+                getAll() {
+                    return cookieStore.getAll()
+                },
+                setAll() { },
+            },
+        }
+    )
+
+    // Kullanıcı bilgisi al
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+        return (
+            <div className="p-8 text-center text-muted-foreground">
+                Giriş yapmanız gerekiyor
+            </div>
+        )
+    }
+
+    // Profile'dan tenant_id al
+    const { data: profile } = await supabase
+        .from("profiles")
+        .select("tenant_id")
+        .eq("user_id", user.id)
+        .single()
+
+    if (!profile) {
+        return (
+            <div className="p-8 text-center text-muted-foreground">
+                Profil bulunamadı
+            </div>
+        )
+    }
+
+    // Tenant bilgilerini çek
+    const { data: tenant } = await supabase
+        .from("tenants")
+        .select("*")
+        .eq("id", profile.tenant_id)
+        .single()
+
     return (
         <div className="space-y-6">
             {/* Header */}
@@ -21,102 +75,8 @@ export default function SettingsPage() {
                 </p>
             </div>
 
-            {/* Genel Bilgiler */}
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <Store className="h-5 w-5" />
-                        Genel Bilgiler
-                    </CardTitle>
-                    <CardDescription>
-                        Mağazanızın temel bilgilerini güncelleyin
-                    </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <div className="grid sm:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="storeName">Mağaza Adı</Label>
-                            <Input id="storeName" defaultValue="Demo Mağaza" />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="storeSlug">URL Slug</Label>
-                            <div className="flex">
-                                <span className="inline-flex items-center px-3 bg-muted border border-r-0 rounded-l-md text-sm text-muted-foreground">
-                                    vitrin.com/
-                                </span>
-                                <Input
-                                    id="storeSlug"
-                                    defaultValue="demo"
-                                    className="rounded-l-none"
-                                />
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="space-y-2">
-                        <Label htmlFor="description">Açıklama</Label>
-                        <Input
-                            id="description"
-                            defaultValue="Kaliteli ürünler, uygun fiyatlar"
-                        />
-                    </div>
-
-                    <div className="grid sm:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="whatsapp">WhatsApp Numarası</Label>
-                            <Input
-                                id="whatsapp"
-                                type="tel"
-                                defaultValue="+905551234567"
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="location">Konum</Label>
-                            <Input id="location" defaultValue="İstanbul, Türkiye" />
-                        </div>
-                    </div>
-
-                    <Button>
-                        <Save className="h-4 w-4 mr-2" />
-                        Kaydet
-                    </Button>
-                </CardContent>
-            </Card>
-
-            {/* Görünüm Ayarları */}
-            <Card>
-                <CardHeader>
-                    <CardTitle>Görünüm Ayarları</CardTitle>
-                    <CardDescription>
-                        Vitrin temasını ve görünümünü özelleştirin
-                    </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <div className="grid sm:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="primaryColor">Ana Renk</Label>
-                            <div className="flex gap-2">
-                                <Input
-                                    id="primaryColor"
-                                    type="color"
-                                    defaultValue="#000000"
-                                    className="w-12 h-10 p-1"
-                                />
-                                <Input defaultValue="#000000" className="flex-1" />
-                            </div>
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="logo">Logo</Label>
-                            <Input id="logo" type="file" accept="image/*" />
-                        </div>
-                    </div>
-
-                    <Button>
-                        <Save className="h-4 w-4 mr-2" />
-                        Kaydet
-                    </Button>
-                </CardContent>
-            </Card>
+            {/* Settings Form */}
+            <SettingsForm tenant={tenant as Tenant} />
         </div>
     )
 }
