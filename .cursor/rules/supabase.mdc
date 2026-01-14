@@ -1,0 +1,41 @@
+# Supabase Backend Kuralları
+
+## Veritabanı Sorguları
+
+### Tenant İzolasyonu
+- Her sorgu mutlaka `tenant_id` içermelidir
+- RLS politikalarında JWT claims kullanılmalıdır:
+```sql
+USING (tenant_id = (auth.jwt() ->> 'tenant_id')::uuid)
+```
+
+### İndeksleme
+- Her tabloda `tenant_id` indeksi zorunludur
+- JSONB sütunları için GIN indeks (`jsonb_path_ops`)
+```sql
+CREATE INDEX idx_products_attributes 
+ON public.products 
+USING GIN (attributes jsonb_path_ops);
+```
+
+## RLS Politikaları
+
+### SELECT
+- `tenant_id` eşleşmesi zorunlu
+- Public vitrin için ayrı `anon` politikası (`is_public = true`)
+
+### INSERT
+- `WITH CHECK` ifadesi zorunlu
+- Eklenen satırın `tenant_id` değeri JWT ile eşleşmeli
+
+### UPDATE/DELETE
+- Sadece kiracı sahibi değiştirebilir
+- Soft delete varsayılan, GDPR talepleri için hard delete prosedürü
+
+## Auth Kontrolleri
+- `auth.jwt()` fonksiyonu kullan
+- `auth.uid()` ile profil JOIN'i yasak (performans)
+
+## Tetikleyiciler
+- `auth.users` → `public.profiles` senkronizasyonu trigger ile
+- Orphaned record kabul edilemez

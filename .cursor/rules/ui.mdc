@@ -1,0 +1,66 @@
+# UI/UX Frontend Kuralları
+
+## Mobil Öncelikli Tasarım
+
+### Breakpoint Stratejisi
+- Varsayılan: Mobil stiller
+- `md:` (768px+): Tablet
+- `lg:` (1024px+): Masaüstü
+
+### Filtreleme Deseni
+```tsx
+// Mobil (< 768px): Drawer (alttan yukarı)
+// Masaüstü (>= 768px): Sheet (sağdan)
+
+const isMobile = useMediaQuery("(max-width: 767px)");
+
+return isMobile ? (
+  <Drawer>
+    <FilterContent />
+  </Drawer>
+) : (
+  <Sheet>
+    <FilterContent />
+  </Sheet>
+);
+```
+
+## Glassmorphism
+
+### Utility Sınıfları
+```css
+.glass-panel {
+  @apply bg-white/70 backdrop-blur-md border border-white/20 shadow-xl;
+}
+.dark .glass-panel {
+  @apply bg-black/70 backdrop-blur-md border border-white/10;
+}
+```
+
+## Yatay Kaydırma
+
+### Mobil Listeler
+- `ScrollArea` yerine native CSS snap kullan
+- `overflow-x-auto snap-x snap-mandatory`
+
+## Sticky Footer
+
+### WhatsApp Butonu
+```tsx
+<div className="sticky bottom-0 pb-safe bg-background/80 backdrop-blur-sm">
+  <WhatsAppOrderButton />
+</div>
+```
+
+## Shadcn UI Bileşenleri
+
+### Kullanılacaklar
+- Button, Card, Input, Label
+- Sheet (masaüstü filtreleme)
+- Drawer (mobil filtreleme)
+- ScrollArea (sadece masaüstü)
+
+### Özelleştirme
+- Kalıtım değil, kompozisyon
+- Tailwind utility sınıfları
+- Özel CSS yazmaktan kaçın

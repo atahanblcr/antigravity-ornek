@@ -1,0 +1,98 @@
+# Dijital Vitrin SaaS v3.0 - AI Asistanı Kuralları
+
+## 1. Bağlam ve Prensipler
+
+### Çok Kiracılılık (Multi-Tenancy)
+- Yazılan her SQL sorgusu, API rotası ve veri çekme kancası, mutlaka `tenant_id` bağlamını gözetmelidir
+- Veri sızıntısı kabul edilemez
+- RLS politikaları JWT Custom Claims kullanmalıdır: `auth.jwt() ->> 'tenant_id'`
+- Profil tablosuna JOIN yapmak yasaktır
+
+### Mobil Öncelik
+- UI kodları önce mobil ekranlar için yazılmalı
+- Masaüstü için `md:` veya `lg:` ön ekleri ile genişletilmelidir (Mobile-First Tailwind)
+- Filtreleme: Mobilde `Drawer`, Masaüstünde `Sheet` kullan
+
+### Performans
+- JSONB sütunlarında sorgu yaparken `@>` operatörü kullanılmalıdır
+- GIN indeksler `jsonb_path_ops` ile oluşturulmalıdır
+- Gereksiz modül importlarından kaçınılmalıdır
+- N+1 sorgu problemi yasaktır
+
+---
+
+## 2. Teknoloji Yığını Zorunlulukları
+
+| Kategori | Teknoloji |
+|----------|-----------|
+| Sunucu Durumu | TanStack Query (React Query) |
+| İstemci Durumu | Zustand |
+| Formlar | React Hook Form + Zod |
+| UI | Shadcn UI + Tailwind CSS |
+| Veritabanı | Supabase (PostgreSQL + RLS) |
+
+---
+
+## 3. Kodlama Standartları
+
+### TypeScript
+- Strict mode aktif olmalıdır
+- `any` tipi kesinlikle yasaktır
+- Tüm prop'lar ve dönüş değerleri açıkça tiplenmelidir
+- Zod ile runtime doğrulama zorunludur
+
+### React
+- Fonksiyonel bileşenler (arrow function) kullanılmalıdır
+- Class component yasaktır
+- Early return deseni uygulanmalıdır
+- Satır içi (inline) stiller yasaktır
+
+### Dosya İsimlendirme
+- Dosyalar: `kebab-case.tsx`
+- Bileşenler: `PascalCase`
+- Hook'lar: `use-feature.ts`
+
+---
+
+## 4. UI/UX Desenleri
+
+### Glassmorphism
+```css
+.glass-panel {
+  @apply bg-white/70 backdrop-blur-md border border-white/20 shadow-xl;
+}
+```
+
+### Responsive Filtreleme
+- `< 768px`: Drawer (alttan yukarı)
+- `>= 768px`: Sheet (sağdan)
+- Form içeriği `FilterContent` olarak ayrı bileşen
+
+### Sticky Footer
+- `sticky bottom-0` ile sabitlenmiş WhatsApp butonu
+- iOS safe area: `pb-safe` padding
+
+---
+
+## 5. Güvenlik
+
+### Çevresel Değişkenler
+- `NEXT_PUBLIC_*`: İstemci tarafında güvenli
+- `SUPABASE_SERVICE_ROLE_KEY`: Kesinlikle gizli, sadece sunucu tarafı
+
+### RLS Politikaları
+- Birincil güvenlik katmanıdır
+- Uygulama filtreleri sadece UX optimizasyonudur
+- Her tabloda `tenant_id` indeksi zorunludur
+
+---
+
+## 6. Yasaklar
+
+❌ `any` tipi kullanımı
+❌ Class component
+❌ Inline stiller
+❌ Profil tablosuna JOIN ile tenant_id alma
+❌ JSONB sorgularında `->>` operatörü (GIN indeks bypass)
+❌ Service role key istemci tarafında
+❌ Soft delete ile GDPR uyumluluk (hard delete gerekli)
