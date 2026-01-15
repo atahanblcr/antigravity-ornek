@@ -7,15 +7,20 @@ import { ProductCard } from "./product-card"
 
 interface FeaturedProductsSectionProps {
     products: Product[]
+    title?: string
+    description?: string
 }
 
 /**
- * Kampanyalı Ürünler Bölümü
- * Ana sayfada öne çıkan ürünleri gösterir
+ * Ürün Listesi Bölümü (Kampanyalı veya Yeni Ürünler)
  */
-export function FeaturedProductsSection({ products }: FeaturedProductsSectionProps) {
+export function FeaturedProductsSection({
+    products,
+    title = "🔥 Kampanyalı Ürünler",
+    description = "Özel fırsatları kaçırmayın!"
+}: FeaturedProductsSectionProps) {
     if (!products || products.length === 0) {
-        return null // Kampanyalı ürün yoksa bölümü gösterme
+        return null
     }
 
     return (
@@ -23,9 +28,9 @@ export function FeaturedProductsSection({ products }: FeaturedProductsSectionPro
             <div className="container mx-auto px-4">
                 <div className="flex items-center justify-between mb-8">
                     <div>
-                        <h2 className="text-3xl font-bold mb-2">🔥 Kampanyalı Ürünler</h2>
+                        <h2 className="text-3xl font-bold mb-2">{title}</h2>
                         <p className="text-muted-foreground">
-                            Özel fırsatları kaçırmayın!
+                            {description}
                         </p>
                     </div>
                 </div>

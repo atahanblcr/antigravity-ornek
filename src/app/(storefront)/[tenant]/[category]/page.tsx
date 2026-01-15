@@ -24,8 +24,7 @@ export async function generateMetadata({ params }: PageProps) {
 
 /**
  * Kategori Detay Sayfası (Server Component)
- * Reference.md Bölüm 3.3 - JSONB @> Filtreleme
- * Reference.md Bölüm 3.4 - Fasetli Arama
+ * Basit filtreleme: Fiyat aralığı ve sıralama
  */
 export default async function CategoryPage({ params, searchParams }: PageProps) {
     const { tenant: tenantSlug, category: categorySlug } = await params
@@ -69,14 +68,11 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
     }
 
     // 3. URL'den filtreleri al
-    const filters: Record<string, string> = {}
-    Object.entries(resolvedSearchParams).forEach(([key, value]) => {
-        if (typeof value === "string" && key !== "sort") {
-            filters[key] = value
-        }
-    })
+    const minPrice = resolvedSearchParams.minPrice ? parseFloat(resolvedSearchParams.minPrice as string) : undefined
+    const maxPrice = resolvedSearchParams.maxPrice ? parseFloat(resolvedSearchParams.maxPrice as string) : undefined
+    const sortBy = resolvedSearchParams.sort as string | undefined
 
-    // 4. Ürünleri çek (JSONB @> filtreleme)
+    // 4. Ürünleri çek
     let query = supabase
         .from("products")
         .select("*")
@@ -85,75 +81,45 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
         .eq("is_active", true)
         .is("deleted_at", null)
 
-    // Reference.md Bölüm 3.3 - JSONB @> operatörü ile filtreleme
-    if (Object.keys(filters).length > 0) {
-        // DB'de attribute değerleri array olarak saklanıyor (ör. "Renk": ["Siyah"])
-        // URL'den gelen değerler string (ör. "Renk": "Siyah")
-        // @> operatörü için değeri array içine almalıyız: {"Renk": ["Siyah"]}
-        const arrayFilters: Record<string, string[]> = {}
-        Object.entries(filters).forEach(([key, value]) => {
-            arrayFilters[key] = [value]
-        })
-        query = query.contains("attributes", arrayFilters)
+    // Fiyat aralığı filtresi
+    if (minPrice !== undefined) {
+        query = query.gte("base_price", minPrice)
+    }
+    if (maxPrice !== undefined) {
+        query = query.lte("base_price", maxPrice)
     }
 
     // Sıralama
-    const sortBy = resolvedSearchParams.sort as string | undefined
     if (sortBy === "price_asc") {
         query = query.order("base_price", { ascending: true })
     } else if (sortBy === "price_desc") {
         query = query.order("base_price", { ascending: false })
+    } else if (sortBy === "name_asc") {
+        query = query.order("name", { ascending: true })
+    } else if (sortBy === "name_desc") {
+        query = query.order("name", { ascending: false })
     } else {
+        // Varsayılan: En yeni ürünler
         query = query.order("created_at", { ascending: false })
     }
 
     const { data: products } = await query
 
-    // 5. Fasetli arama için RPC fonksiyonu çağır
-    // Bu kategorideki tüm attribute değerlerini al
-    const facets: Record<string, { value: string; count: number }[]> = {}
-
-    // Tüm ürünlerin attribute'larından benzersiz key'leri bul
-    const allProducts = await supabase
+    // 5. Fiyat aralığı bilgisi için min/max fiyatları al
+    const { data: priceStats } = await supabase
         .from("products")
-        .select("attributes")
+        .select("base_price")
         .eq("tenant_id", tenant.id)
         .eq("category_id", categoryData.id)
         .eq("is_active", true)
         .is("deleted_at", null)
 
-    if (allProducts.data) {
-        const attributeKeys = new Set<string>()
-        allProducts.data.forEach((p) => {
-            const attrs = p.attributes as Record<string, string | string[]> | null
-            if (attrs) {
-                Object.keys(attrs).forEach((key) => attributeKeys.add(key))
-            }
-        })
-
-        // Her attribute key için değerleri say
-        attributeKeys.forEach((key) => {
-            const valueCount = new Map<string, number>()
-            allProducts.data.forEach((p) => {
-                const attrs = p.attributes as Record<string, string | string[]> | null
-                if (attrs && attrs[key]) {
-                    const val = attrs[key]
-                    if (typeof val === "string") {
-                        valueCount.set(val, (valueCount.get(val) || 0) + 1)
-                    } else if (Array.isArray(val)) {
-                        val.forEach((v) => {
-                            valueCount.set(v, (valueCount.get(v) || 0) + 1)
-                        })
-                    }
-                }
-            })
-
-            if (valueCount.size > 0) {
-                facets[key] = Array.from(valueCount.entries())
-                    .map(([value, count]) => ({ value, count }))
-                    .sort((a, b) => b.count - a.count)
-            }
-        })
+    let minAvailablePrice = 0
+    let maxAvailablePrice = 10000
+    if (priceStats && priceStats.length > 0) {
+        const prices = priceStats.map(p => p.base_price)
+        minAvailablePrice = Math.floor(Math.min(...prices))
+        maxAvailablePrice = Math.ceil(Math.max(...prices))
     }
 
     return (
@@ -179,8 +145,11 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
                     <CategoryFiltersClient
                         categoryName={categoryData.name}
                         productCount={products?.length || 0}
-                        facets={facets}
-                        activeFilters={filters}
+                        minPrice={minAvailablePrice}
+                        maxPrice={maxAvailablePrice}
+                        currentMinPrice={minPrice}
+                        currentMaxPrice={maxPrice}
+                        currentSort={sortBy}
                     />
 
                     {/* Ürün Listesi */}
@@ -188,7 +157,7 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
                         <ProductGrid products={products as Product[]} tenantSlug={tenantSlug} />
                     ) : (
                         <div className="py-12 text-center text-muted-foreground bg-muted/30 rounded-lg">
-                            {Object.keys(filters).length > 0
+                            {minPrice || maxPrice || sortBy
                                 ? "Bu filtrelerle eşleşen ürün bulunamadı."
                                 : "Bu kategoride ürün bulunamadı."}
                         </div>

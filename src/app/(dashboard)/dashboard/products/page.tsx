@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -15,6 +16,7 @@ import {
     Loader2
 } from "lucide-react"
 import { useProducts } from "@/hooks/use-products"
+import { useDeleteProduct } from "@/hooks/use-mutations"
 import { createBrowserClient } from "@supabase/ssr"
 import { PageSkeleton } from "@/components/ui/skeleton"
 
@@ -23,8 +25,12 @@ import { PageSkeleton } from "@/components/ui/skeleton"
  * Reference.md - Dashboard CRUD işlemleri, Real Data Integration
  */
 export default function ProductsPage() {
+    const router = useRouter()
     const [searchQuery, setSearchQuery] = React.useState("")
     const [tenantId, setTenantId] = React.useState<string | null>(null)
+    const [deleteConfirmId, setDeleteConfirmId] = React.useState<string | null>(null)
+
+    const deleteProduct = useDeleteProduct()
 
     // Tenant ID'yi al
     React.useEffect(() => {
@@ -53,6 +59,25 @@ export default function ProductsPage() {
     const filteredProducts = products?.filter((product) =>
         product.name.toLowerCase().includes(searchQuery.toLowerCase())
     ) || []
+
+    const handleEdit = (productId: string) => {
+        router.push(`/dashboard/products/${productId}`)
+    }
+
+    const handleDeleteClick = (productId: string) => {
+        setDeleteConfirmId(productId)
+    }
+
+    const handleDeleteConfirm = () => {
+        if (deleteConfirmId) {
+            deleteProduct.mutate(deleteConfirmId)
+            setDeleteConfirmId(null)
+        }
+    }
+
+    const handleDeleteCancel = () => {
+        setDeleteConfirmId(null)
+    }
 
     if (isLoading && !products) {
         return <PageSkeleton />
@@ -86,6 +111,45 @@ export default function ProductsPage() {
                     className="pl-10"
                 />
             </div>
+
+            {/* Silme Onay Dialogu */}
+            {deleteConfirmId && (
+                <Card className="border-destructive">
+                    <CardContent className="pt-6">
+                        <div className="flex items-center justify-between gap-4">
+                            <div>
+                                <p className="font-medium">Ürünü silmek istediğinize emin misiniz?</p>
+                                <p className="text-sm text-muted-foreground">Bu işlem geri alınamaz.</p>
+                            </div>
+                            <div className="flex gap-2">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleDeleteCancel}
+                                    disabled={deleteProduct.isPending}
+                                >
+                                    İptal
+                                </Button>
+                                <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    onClick={handleDeleteConfirm}
+                                    disabled={deleteProduct.isPending}
+                                >
+                                    {deleteProduct.isPending ? (
+                                        <>
+                                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                            Siliniyor...
+                                        </>
+                                    ) : (
+                                        "Evet, Sil"
+                                    )}
+                                </Button>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
 
             {/* Ürün Listesi */}
             <Card>
@@ -134,13 +198,21 @@ export default function ProductsPage() {
                                         </td>
                                         <td className="py-4 text-right">
                                             <div className="flex items-center justify-end gap-1">
-                                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-8 w-8"
+                                                    onClick={() => handleEdit(product.id)}
+                                                    title="Düzenle"
+                                                >
                                                     <Pencil className="h-4 w-4" />
                                                 </Button>
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
-                                                    className="h-8 w-8 text-destructive"
+                                                    className="h-8 w-8 text-destructive hover:text-destructive"
+                                                    onClick={() => handleDeleteClick(product.id)}
+                                                    title="Sil"
                                                 >
                                                     <Trash2 className="h-4 w-4" />
                                                 </Button>

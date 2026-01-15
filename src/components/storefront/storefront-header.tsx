@@ -39,76 +39,69 @@ export const StorefrontHeader = ({
     }
 
     return (
-        <header className="relative">
-            {/* Arka Plan Gradyan */}
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent" />
+        <header className="sticky top-0 z-50 w-full transition-all duration-300 border-b border-white/10 bg-white/80 backdrop-blur-md support-[backdrop-filter]:bg-white/60">
+            <div className="container mx-auto px-4 py-3">
+                <div className="flex items-center justify-between gap-4">
 
-            {/* İçerik */}
-            <div className="relative px-4 py-3 md:py-4">
-                <div className="max-w-6xl mx-auto">
-                    <div className="flex items-start gap-4">
-                        {/* Logo */}
-                        <div className="relative h-12 w-12 md:h-14 md:w-14 rounded-lg overflow-hidden bg-background shadow-sm flex-shrink-0">
-                            {logoUrl ? (
+                    {/* Sol: Logo ve İsim */}
+                    <div className="flex items-center gap-3">
+                        {logoUrl ? (
+                            <div className="relative h-10 w-10 overflow-hidden rounded-full border border-black/5">
                                 <Image
                                     src={logoUrl}
                                     alt={name}
                                     fill
                                     className="object-cover"
-                                    sizes="80px"
-                                    priority
+                                    sizes="40px"
                                 />
-                            ) : (
-                                <div className="flex items-center justify-center h-full bg-primary/10">
-                                    <Store className="h-8 w-8 text-primary" />
-                                </div>
-                            )}
-                        </div>
+                            </div>
+                        ) : (
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                                <Store className="h-5 w-5" />
+                            </div>
+                        )}
 
-                        {/* Bilgiler */}
-                        <div className="flex-1 min-w-0">
-                            <h1 className="text-xl md:text-2xl font-bold truncate">{name}</h1>
-
-                            {description && (
-                                <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
-                                    {description}
+                        <div className="hidden md:block">
+                            <h1 className="text-lg font-bold tracking-tight leading-none">{name}</h1>
+                            {location && (
+                                <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
+                                    <MapPin className="h-3 w-3" /> {location}
                                 </p>
                             )}
-
-                            {/* Meta Bilgiler */}
-                            <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-muted-foreground">
-                                {location && (
-                                    <span className="flex items-center gap-1">
-                                        <MapPin className="h-3.5 w-3.5" />
-                                        {location}
-                                    </span>
-                                )}
-                                <a
-                                    href={`tel:${whatsappNumber}`}
-                                    className="flex items-center gap-1 hover:text-foreground transition-colors"
-                                >
-                                    <Phone className="h-3.5 w-3.5" />
-                                    {whatsappNumber}
-                                </a>
-                            </div>
                         </div>
+                    </div>
 
-                        {/* Sepet Drawer */}
+                    {/* Sağ: Aksiyonlar */}
+                    <div className="flex items-center gap-2">
+                        {/* WhatsApp (Mobile Only icon, Desktop text) */}
+                        {whatsappNumber && (
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                asChild
+                                className="hidden md:flex gap-2 text-muted-foreground hover:text-foreground"
+                            >
+                                <a href={`tel:${whatsappNumber}`}>
+                                    <Phone className="h-4 w-4" />
+                                    <span>{whatsappNumber}</span>
+                                </a>
+                            </Button>
+                        )}
+
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={handleShare}
+                            className="text-muted-foreground hover:text-foreground"
+                        >
+                            <ExternalLink className="h-5 w-5" />
+                        </Button>
+
                         <CartDrawer
                             storeName={name}
                             phoneNumber={whatsappNumber}
                             tenantId={tenantId}
                         />
-
-                        {/* Paylaş Butonu */}
-                        <Button
-                            variant="outline"
-                            size="icon"
-                            className="flex-shrink-0"
-                            onClick={handleShare}
-                        >
-                            <ExternalLink className="h-4 w-4" />
-                        </Button>
                     </div>
                 </div>
             </div>

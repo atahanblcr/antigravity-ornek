@@ -4,100 +4,156 @@ import * as React from "react"
 import { useRouter, useSearchParams, usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
-import { X, RotateCcw } from "lucide-react"
-
-interface FacetValue {
-    value: string
-    count: number
-}
+import { Input } from "@/components/ui/input"
+import { RotateCcw } from "lucide-react"
 
 interface FilterContentProps {
-    facets: Record<string, FacetValue[]>
-    activeFilters: Record<string, string>
+    minPrice: number
+    maxPrice: number
+    currentMinPrice?: number
+    currentMaxPrice?: number
+    currentSort?: string
     onClose?: () => void
 }
 
 /**
  * Filtreleme Form İçeriği
- * Reference.md Bölüm 3.4 - Fasetli Arama
+ * Basit fiyat aralığı ve sıralama filtreleri
  * 
  * ResponsiveFilter içinde kullanılır
  * URL search params ile state yönetimi
  */
 export function FilterContent({
-    facets,
-    activeFilters,
+    minPrice,
+    maxPrice,
+    currentMinPrice,
+    currentMaxPrice,
+    currentSort,
     onClose,
 }: FilterContentProps) {
     const router = useRouter()
     const pathname = usePathname()
     const searchParams = useSearchParams()
 
-    const [selectedFilters, setSelectedFilters] = React.useState<Record<string, string>>(activeFilters)
-
-    const handleFilterChange = (key: string, value: string) => {
-        setSelectedFilters((prev) => {
-            const newFilters = { ...prev }
-            if (newFilters[key] === value) {
-                delete newFilters[key]
-            } else {
-                newFilters[key] = value
-            }
-            return newFilters
-        })
-    }
+    const [selectedMinPrice, setSelectedMinPrice] = React.useState<number | undefined>(currentMinPrice)
+    const [selectedMaxPrice, setSelectedMaxPrice] = React.useState<number | undefined>(currentMaxPrice)
+    const [selectedSort, setSelectedSort] = React.useState<string | undefined>(currentSort)
 
     const applyFilters = () => {
-        const params = new URLSearchParams()
-        Object.entries(selectedFilters).forEach(([key, value]) => {
-            params.set(key, value)
-        })
+        const params = new URLSearchParams(searchParams.toString())
+
+        // Fiyat filtreleri
+        if (selectedMinPrice !== undefined && selectedMinPrice > minPrice) {
+            params.set("minPrice", selectedMinPrice.toString())
+        } else {
+            params.delete("minPrice")
+        }
+
+        if (selectedMaxPrice !== undefined && selectedMaxPrice < maxPrice) {
+            params.set("maxPrice", selectedMaxPrice.toString())
+        } else {
+            params.delete("maxPrice")
+        }
+
+        // Sıralama
+        if (selectedSort) {
+            params.set("sort", selectedSort)
+        } else {
+            params.delete("sort")
+        }
+
         router.push(`${pathname}?${params.toString()}`)
         onClose?.()
     }
 
     const clearFilters = () => {
-        setSelectedFilters({})
+        setSelectedMinPrice(undefined)
+        setSelectedMaxPrice(undefined)
+        setSelectedSort(undefined)
         router.push(pathname)
         onClose?.()
     }
 
-    const hasFilters = Object.keys(selectedFilters).length > 0
-    const hasChanges = JSON.stringify(selectedFilters) !== JSON.stringify(activeFilters)
+    const hasFilters = selectedMinPrice !== undefined || selectedMaxPrice !== undefined || selectedSort !== undefined
+    const hasChanges =
+        selectedMinPrice !== currentMinPrice ||
+        selectedMaxPrice !== currentMaxPrice ||
+        selectedSort !== currentSort
 
     return (
         <div className="flex flex-col h-full">
             <div className="flex-1 space-y-6">
-                {Object.entries(facets).map(([attributeKey, values]) => (
-                    <div key={attributeKey} className="space-y-3">
-                        <Label className="text-sm font-medium capitalize">
-                            {attributeKey}
-                        </Label>
-                        <div className="flex flex-wrap gap-2">
-                            {values.map(({ value, count }) => {
-                                const isSelected = selectedFilters[attributeKey] === value
-                                return (
-                                    <Button
-                                        key={value}
-                                        variant={isSelected ? "default" : "outline"}
-                                        size="sm"
-                                        onClick={() => handleFilterChange(attributeKey, value)}
-                                        className="gap-1"
-                                    >
-                                        {value}
-                                        <span className="text-xs opacity-70">({count})</span>
-                                    </Button>
-                                )
-                            })}
+                {/* Fiyat Aralığı */}
+                <div className="space-y-3">
+                    <Label className="text-sm font-medium">Fiyat Aralığı</Label>
+                    <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-2">
+                            <Label htmlFor="minPrice" className="text-xs text-muted-foreground">
+                                Min Fiyat
+                            </Label>
+                            <Input
+                                id="minPrice"
+                                type="number"
+                                min={minPrice}
+                                max={maxPrice}
+                                placeholder={`${minPrice} ₺`}
+                                value={selectedMinPrice ?? ""}
+                                onChange={(e) => {
+                                    const value = e.target.value ? parseFloat(e.target.value) : undefined
+                                    setSelectedMinPrice(value)
+                                }}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="maxPrice" className="text-xs text-muted-foreground">
+                                Max Fiyat
+                            </Label>
+                            <Input
+                                id="maxPrice"
+                                type="number"
+                                min={minPrice}
+                                max={maxPrice}
+                                placeholder={`${maxPrice} ₺`}
+                                value={selectedMaxPrice ?? ""}
+                                onChange={(e) => {
+                                    const value = e.target.value ? parseFloat(e.target.value) : undefined
+                                    setSelectedMaxPrice(value)
+                                }}
+                            />
                         </div>
                     </div>
-                ))}
-
-                {Object.keys(facets).length === 0 && (
-                    <p className="text-sm text-muted-foreground text-center py-8">
-                        Bu kategoride filtrelenebilir özellik bulunamadı.
+                    <p className="text-xs text-muted-foreground">
+                        Fiyat aralığı: {minPrice} ₺ - {maxPrice} ₺
                     </p>
-                )}
+                </div>
+
+                {/* Sıralama */}
+                <div className="space-y-3">
+                    <Label className="text-sm font-medium">Sıralama</Label>
+                    <div className="flex flex-col gap-2">
+                        {sortOptions.map((option) => (
+                            <Button
+                                key={option.value}
+                                variant={selectedSort === option.value ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => setSelectedSort(option.value)}
+                                className="justify-start"
+                            >
+                                {option.label}
+                            </Button>
+                        ))}
+                        {selectedSort && (
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setSelectedSort(undefined)}
+                                className="justify-start text-muted-foreground"
+                            >
+                                Sıralamayı Kaldır
+                            </Button>
+                        )}
+                    </div>
+                </div>
             </div>
 
             {/* Aksiyon Butonları */}
@@ -124,32 +180,9 @@ export function FilterContent({
     )
 }
 
-/**
- * Aktif Filtreleri Gösteren Chip'ler
- */
-export function ActiveFilterChips({
-    filters,
-    onRemove,
-}: {
-    filters: Record<string, string>
-    onRemove: (key: string) => void
-}) {
-    if (Object.keys(filters).length === 0) return null
-
-    return (
-        <div className="flex flex-wrap gap-2">
-            {Object.entries(filters).map(([key, value]) => (
-                <Button
-                    key={key}
-                    variant="secondary"
-                    size="sm"
-                    className="gap-1 h-7 text-xs"
-                    onClick={() => onRemove(key)}
-                >
-                    <span className="capitalize">{key}:</span> {value}
-                    <X className="h-3 w-3" />
-                </Button>
-            ))}
-        </div>
-    )
-}
+const sortOptions = [
+    { value: "price_asc", label: "Ucuzdan Pahalıya" },
+    { value: "price_desc", label: "Pahalıdan Ucuza" },
+    { value: "name_asc", label: "İsme Göre (A-Z)" },
+    { value: "name_desc", label: "İsme Göre (Z-A)" },
+]

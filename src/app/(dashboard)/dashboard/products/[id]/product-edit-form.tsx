@@ -138,7 +138,7 @@ export function ProductEditForm({ product, categories }: ProductEditFormProps) {
                                 id="base_price"
                                 type="number"
                                 step="0.01"
-                                {...register("base_price")}
+                                {...register("base_price", { valueAsNumber: true })}
                             />
                             {errors.base_price && (
                                 <p className="text-sm text-destructive">{errors.base_price.message}</p>
@@ -150,7 +150,7 @@ export function ProductEditForm({ product, categories }: ProductEditFormProps) {
                                 id="sale_price"
                                 type="number"
                                 step="0.01"
-                                {...register("sale_price")}
+                                {...register("sale_price", { valueAsNumber: true })}
                             />
                         </div>
                     </div>

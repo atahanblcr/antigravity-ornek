@@ -145,15 +145,26 @@ export function useUpdateProduct() {
                 delete updateData.image_url
             }
 
-            const { data: product, error } = await supabase
+            console.log("[UPDATE] Updating product:", id, updateData)
+
+            const result = await supabase
                 .from("products")
                 .update(updateData)
                 .eq("id", id)
                 .select()
-                .single()
 
-            if (error) throw error
-            return product
+            console.log("[UPDATE] Result:", result)
+
+            if (result.error) {
+                console.error("[UPDATE] Error:", result.error)
+                throw result.error
+            }
+            if (!result.data || result.data.length === 0) {
+                console.error("[UPDATE] No rows affected")
+                throw new Error("Ürün bulunamadı veya güncelleme yetkisi yok")
+            }
+
+            return { id }
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["products"] })
@@ -172,22 +183,38 @@ export function useUpdateProduct() {
 export function useDeleteProduct() {
     const queryClient = useQueryClient()
     const { addToast } = useToast()
+    const router = useRouter()
 
     return useMutation({
         mutationFn: async (productId: string) => {
             const supabase = getSupabase()
 
             // Soft delete - Reference.md Bölüm 8.2
-            const { error } = await supabase
+            console.log("[DELETE] Deleting product:", productId)
+
+            const result = await supabase
                 .from("products")
                 .update({ deleted_at: new Date().toISOString(), is_active: false })
                 .eq("id", productId)
+                .select()
 
-            if (error) throw error
+            console.log("[DELETE] Result:", result)
+
+            if (result.error) {
+                console.error("[DELETE] Error:", result.error)
+                throw result.error
+            }
+            if (!result.data || result.data.length === 0) {
+                console.error("[DELETE] No rows affected")
+                throw new Error("Ürün bulunamadı veya silme yetkisi yok")
+            }
+
+            return { id: productId }
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["products"] })
             addToast("Ürün başarıyla silindi", "success")
+            router.push("/dashboard/products")
         },
         onError: (error: Error) => {
             addToast(`Hata: ${error.message}`, "error")

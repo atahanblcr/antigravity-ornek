@@ -63,6 +63,7 @@ export function CategoryEditForm({ category }: CategoryEditFormProps) {
         handleSubmit,
         control,
         watch,
+        setValue,
         formState: { errors, isDirty },
     } = useForm<CategoryFormData>({
         resolver: zodResolver(categorySchema) as any,
@@ -243,9 +244,11 @@ export function CategoryEditForm({ category }: CategoryEditFormProps) {
                                                         .split(",")
                                                         .map((opt) => opt.trim())
                                                         .filter((opt) => opt.length > 0)
-                                                    // Manuel olarak form state'ini güncelle
-                                                    const currentValues = watch("attribute_schema")
-                                                    currentValues[index].options = optionsArray
+                                                    // setValue ile form state'ini güncelle
+                                                    setValue(`attribute_schema.${index}.options`, optionsArray, {
+                                                        shouldValidate: true,
+                                                        shouldDirty: true,
+                                                    })
                                                 }}
                                             />
                                             {errors.attribute_schema?.[index]?.options && (

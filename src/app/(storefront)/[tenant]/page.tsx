@@ -3,6 +3,7 @@ import { notFound } from "next/navigation"
 import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 import { StorefrontHeader } from "@/components/storefront/storefront-header"
+import { HeroSection } from "@/components/storefront/hero-section"
 import { WhatsAppOrderButton } from "@/components/shared/whatsapp-order-button"
 import { CategoryCard } from "@/components/storefront/category-card"
 import { FeaturedProductsSection } from "@/components/storefront/featured-products-section"
@@ -109,20 +110,35 @@ export default async function StorefrontPage({ params }: { params: Promise<{ ten
         .limit(12)
 
     return (
-        <div className="min-h-screen bg-background pb-20">
-            {/* Header */}
+        <div className="min-h-screen bg-background">
+            {/* Sticky Header */}
             <StorefrontHeader
                 name={tenant?.name || resolvedParams.tenant}
                 slug={resolvedParams.tenant}
                 tenantId={tenant?.id || ""}
                 whatsappNumber={tenant?.whatsapp_number || ""}
+                description={tenant?.description}
             />
 
-            <main className="container px-4 py-6 space-y-8">
+            {/* Hero Section */}
+            <HeroSection
+                name={tenant?.name || resolvedParams.tenant}
+                description={tenant?.description || "En seçkin ürünleri keşfedin."}
+            />
+
+            <main className="container pb-20 space-y-16">
+
+                {/* ID for anchor link scroll */}
+                <div id="products" className="pt-8"></div>
+
                 {/* Kategoriler */}
-                <section className="space-y-4">
-                    <h2 className="text-xl font-semibold tracking-tight">Kategoriler</h2>
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
+                <section className="space-y-6">
+                    <div className="text-center space-y-2">
+                        <h2 className="text-2xl md:text-3xl font-bold tracking-tight">Koleksiyonlar</h2>
+                        <div className="h-1 w-20 bg-primary mx-auto rounded-full opacity-20" />
+                    </div>
+
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8 px-4">
                         {categories?.map((category) => (
                             <CategoryCard
                                 key={category.id}
@@ -134,7 +150,7 @@ export default async function StorefrontPage({ params }: { params: Promise<{ ten
                         ))}
                     </div>
                     {(!categories || categories.length === 0) && (
-                        <div className="text-center py-8 text-muted-foreground bg-muted/30 rounded-lg">
+                        <div className="text-center py-12 text-muted-foreground bg-secondary/30 rounded-2xl mx-4">
                             Henüz kategori eklenmemiş.
                         </div>
                     )}
@@ -147,12 +163,11 @@ export default async function StorefrontPage({ params }: { params: Promise<{ ten
 
                 {/* Yeni Ürünler - Tüm aktif ürünler */}
                 {latestProducts && latestProducts.length > 0 && (
-                    <section className="space-y-4">
-                        <div className="flex items-center justify-between">
-                            <h2 className="text-xl font-semibold tracking-tight">Yeni Ürünler</h2>
-                        </div>
-                        <FeaturedProductsSection products={latestProducts as Product[]} />
-                    </section>
+                    <FeaturedProductsSection
+                        products={latestProducts as Product[]}
+                        title="✨ Yeni Ürünler"
+                        description="Koleksiyonumuza eklenen en son parçaları keşfedin"
+                    />
                 )}
             </main>
 

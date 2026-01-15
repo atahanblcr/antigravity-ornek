@@ -280,6 +280,9 @@ export function ProductDetailClient({
                 tenantId={tenant.id}
                 phoneNumber={tenant.whatsapp_number}
                 storeName={tenant.name}
+                productName={product.name}
+                productPrice={currentPrice}
+                selectedAttributes={selectedAttributes}
             />
         </>
     )
