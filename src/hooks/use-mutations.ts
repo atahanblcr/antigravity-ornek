@@ -10,17 +10,50 @@ const getSupabase = () => {
     return createBrowserClient(url, key)
 }
 
+
+
 /**
  * Ürün Görseli Yükleme
  */
 export async function uploadProductImage(file: File, tenantId: string) {
     const supabase = getSupabase()
-    const fileExt = file.name.split('.').pop()
+
+    // HEIC/HEIF kontrolü ve dönüşümü
+    let fileToUpload = file
+    const isHeic = file.name.toLowerCase().endsWith('.heic') ||
+        file.name.toLowerCase().endsWith('.heif') ||
+        file.type === 'image/heic' ||
+        file.type === 'image/heif'
+
+    if (isHeic) {
+        try {
+            console.log('Converting HEIC to JPEG...')
+            const heic2any = (await import("heic2any")).default
+            const convertedBlob = await heic2any({
+                blob: file,
+                toType: "image/jpeg",
+                quality: 0.8
+            }) as Blob
+
+            // Blob'u File objesine çevir
+            fileToUpload = new File(
+                [convertedBlob],
+                file.name.replace(/\.(heic|heif)$/i, '.jpg'),
+                { type: "image/jpeg" }
+            )
+            console.log('Conversion successful:', fileToUpload.name)
+        } catch (e) {
+            console.error('HEIC conversion failed:', e)
+            throw new Error('HEIC görseli dönüştürülemedi. Lütfen JPG veya PNG formatında yükleyiniz.')
+        }
+    }
+
+    const fileExt = fileToUpload.name.split('.').pop()
     const fileName = `${tenantId}/${Math.random().toString(36).substring(2)}.${fileExt}`
 
     const { error: uploadError } = await supabase.storage
         .from('products')
-        .upload(fileName, file)
+        .upload(fileName, fileToUpload)
 
     if (uploadError) throw uploadError
 
@@ -44,6 +77,7 @@ interface ProductData {
     category_id?: string
     sku?: string
     image_url?: string
+    images?: string[]
     attributes?: Record<string, string>
     is_active?: boolean
     is_featured?: boolean
@@ -71,7 +105,7 @@ export function useCreateProduct() {
                 .insert({
                     ...data,
                     tenant_id: tenantId,
-                    image_url: imageUrl,
+                    images: imageUrl ? [imageUrl] : [],
                     attributes: data.attributes || {}
                 })
                 .select()
@@ -106,7 +140,9 @@ export function useUpdateProduct() {
             let updateData = { ...data }
 
             if (imageFile) {
-                updateData.image_url = await uploadProductImage(imageFile, tenantId)
+                const url = await uploadProductImage(imageFile, tenantId)
+                updateData.images = [url]
+                delete updateData.image_url
             }
 
             const { data: product, error } = await supabase

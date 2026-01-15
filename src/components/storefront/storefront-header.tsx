@@ -44,11 +44,11 @@ export const StorefrontHeader = ({
             <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent" />
 
             {/* İçerik */}
-            <div className="relative px-4 py-6 md:py-8">
+            <div className="relative px-4 py-3 md:py-4">
                 <div className="max-w-6xl mx-auto">
                     <div className="flex items-start gap-4">
                         {/* Logo */}
-                        <div className="relative h-16 w-16 md:h-20 md:w-20 rounded-xl overflow-hidden bg-background shadow-lg flex-shrink-0">
+                        <div className="relative h-12 w-12 md:h-14 md:w-14 rounded-lg overflow-hidden bg-background shadow-sm flex-shrink-0">
                             {logoUrl ? (
                                 <Image
                                     src={logoUrl}
@@ -83,10 +83,13 @@ export const StorefrontHeader = ({
                                         {location}
                                     </span>
                                 )}
-                                <span className="flex items-center gap-1">
+                                <a
+                                    href={`tel:${whatsappNumber}`}
+                                    className="flex items-center gap-1 hover:text-foreground transition-colors"
+                                >
                                     <Phone className="h-3.5 w-3.5" />
                                     {whatsappNumber}
-                                </span>
+                                </a>
                             </div>
                         </div>
 

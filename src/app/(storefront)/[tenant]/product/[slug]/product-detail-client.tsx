@@ -12,10 +12,10 @@ import type { Product, Tenant } from "@/types"
 
 interface ProductDetailClientProps {
     product: Product & {
-        categories?: { name: string; slug: string } | null
+        categories?: { name: string; slug: string } | { name: string; slug: string }[] | null
     }
     tenant: Tenant
-    relatedProducts: Pick<Product, "id" | "name" | "slug" | "base_price" | "sale_price" | "image_url">[]
+    relatedProducts: Pick<Product, "id" | "name" | "slug" | "base_price" | "sale_price" | "image_url" | "images">[]
 }
 
 /**
@@ -104,8 +104,8 @@ export function ProductDetailClient({
                                                         key={idx}
                                                         onClick={() => setSelectedImage(idx)}
                                                         className={`w-2 h-2 rounded-full transition-colors ${idx === selectedImage
-                                                                ? "bg-white"
-                                                                : "bg-white/50"
+                                                            ? "bg-white"
+                                                            : "bg-white/50"
                                                             }`}
                                                     />
                                                 ))}
@@ -128,8 +128,8 @@ export function ProductDetailClient({
                                         key={idx}
                                         onClick={() => setSelectedImage(idx)}
                                         className={`relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 border-2 transition-colors ${idx === selectedImage
-                                                ? "border-primary"
-                                                : "border-transparent"
+                                            ? "border-primary"
+                                            : "border-transparent"
                                             }`}
                                     >
                                         <Image
@@ -150,10 +150,10 @@ export function ProductDetailClient({
                         {/* Kategori */}
                         {product.categories && (
                             <Link
-                                href={`/${tenant.slug}/${product.categories.slug}`}
+                                href={`/${tenant.slug}/${Array.isArray(product.categories) ? product.categories[0]?.slug : product.categories.slug}`}
                                 className="text-sm text-primary hover:underline"
                             >
-                                {product.categories.name}
+                                {Array.isArray(product.categories) ? product.categories[0]?.name : product.categories.name}
                             </Link>
                         )}
 
@@ -245,9 +245,9 @@ export function ProductDetailClient({
                                 >
                                     <Card className="overflow-hidden hover:shadow-lg transition-shadow">
                                         <div className="relative aspect-square bg-muted">
-                                            {related.image_url ? (
+                                            {related.image_url || (related.images && related.images.length > 0) ? (
                                                 <Image
-                                                    src={related.image_url}
+                                                    src={related.image_url || related.images![0]}
                                                     alt={related.name}
                                                     fill
                                                     className="object-cover"

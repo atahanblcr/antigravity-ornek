@@ -5,6 +5,7 @@ import { cookies } from "next/headers"
 import Link from "next/link"
 import { ChevronLeft, Share2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { ShareButton } from "@/components/storefront/share-button"
 import { ProductDetailClient } from "./product-detail-client"
 import type { Metadata } from "next"
 
@@ -107,7 +108,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
     // İlgili ürünleri çek (aynı kategoriden)
     const { data: relatedProducts } = await supabase
         .from("products")
-        .select("id, name, slug, base_price, sale_price, image_url")
+        .select("id, name, slug, base_price, sale_price, image_url, images")
         .eq("tenant_id", tenantData.id)
         .eq("category_id", product.category_id)
         .neq("id", product.id)
@@ -144,21 +145,4 @@ export default async function ProductDetailPage({ params }: PageProps) {
     )
 }
 
-function ShareButton({ title, storeName }: { title: string; storeName: string }) {
-    return (
-        <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => {
-                if (typeof navigator !== "undefined" && navigator.share) {
-                    navigator.share({
-                        title: `${title} | ${storeName}`,
-                        url: window.location.href,
-                    }).catch(() => { })
-                }
-            }}
-        >
-            <Share2 className="h-4 w-4" />
-        </Button>
-    )
-}
+

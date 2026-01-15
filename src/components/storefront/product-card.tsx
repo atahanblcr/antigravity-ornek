@@ -30,73 +30,70 @@ export const ProductCard = ({ product, tenantSlug }: ProductCardProps) => {
 
     const CardWrapper = tenantSlug
         ? ({ children }: { children: React.ReactNode }) => (
-            <Link href={`/${tenantSlug}/product/${product.slug}`}>{children}</Link>
+            <Link href={`/${tenantSlug}/product/${product.slug}`} className="block h-full">{children}</Link>
         )
         : React.Fragment
 
     return (
-        <Card className="group overflow-hidden transition-all duration-300 hover:shadow-lg glass-panel">
+        <Card className="group h-full flex flex-col overflow-hidden border-border/50 bg-card hover:border-primary/20 hover:shadow-xl transition-all duration-300">
             <CardWrapper>
                 {/* Ürün Görseli */}
-                <div className="relative aspect-square overflow-hidden bg-muted cursor-pointer">
+                <div className="relative aspect-[4/5] overflow-hidden bg-secondary/50">
                     {product.image_url ? (
                         <Image
                             src={product.image_url}
                             alt={product.name}
                             fill
-                            className="object-cover transition-transform duration-300 group-hover:scale-105"
+                            className="object-cover transition-transform duration-700 ease-in-out group-hover:scale-105"
                             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                         />
                     ) : (
                         <div className="flex items-center justify-center h-full">
-                            <ShoppingBag className="h-12 w-12 text-muted-foreground/40" />
+                            <ShoppingBag className="h-10 w-10 text-muted-foreground/30" />
                         </div>
                     )}
 
                     {/* İndirim Etiketi */}
                     {hasDiscount && (
-                        <div className="absolute top-2 left-2 bg-destructive text-destructive-foreground text-xs font-bold px-2 py-1 rounded">
-                            %{discountPercent}
+                        <div className="absolute top-2 right-2 bg-destructive text-destructive-foreground text-[10px] font-bold px-2 py-1 rounded-full shadow-sm">
+                            %{discountPercent} İndirim
                         </div>
                     )}
+
+                    {/* Hızlı Ekle Butonu - Desktop hover'da görünür, mobilde her zaman */}
+                    <div className="absolute bottom-3 right-3 translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
+                        <div onClick={(e) => e.preventDefault()}>
+                            <AddToCartButton product={product} variant="icon" />
+                        </div>
+                    </div>
                 </div>
-            </CardWrapper>
 
-            <CardContent className="p-3">
-                {/* Ürün Adı */}
-                <h3 className="font-medium text-sm line-clamp-2 mb-1">{product.name}</h3>
+                <CardContent className="flex-1 p-4 flex flex-col gap-2">
+                    {/* Ürün Adı */}
+                    <h3 className="font-medium text-sm leading-tight text-foreground/90 group-hover:text-primary transition-colors line-clamp-2">
+                        {product.name}
+                    </h3>
 
-                {/* Fiyat ve Sepete Ekle */}
-                <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-baseline gap-2">
-                        <span className="text-base font-bold text-primary">
+                    {/* Fiyat */}
+                    <div className="mt-auto pt-2 flex items-baseline gap-2">
+                        <span className="text-lg font-bold text-foreground">
                             {displayPrice.toLocaleString("tr-TR")} ₺
                         </span>
                         {hasDiscount && (
-                            <span className="text-xs text-muted-foreground line-through">
+                            <span className="text-xs text-muted-foreground line-through decoration-destructive/50">
                                 {product.base_price.toLocaleString("tr-TR")} ₺
                             </span>
                         )}
                     </div>
 
-                    {/* Compact Sepete Ekle Butonu */}
-                    <AddToCartButton product={product} variant="compact" />
-                </div>
-
-                {/* Özellikler */}
-                {attributes && Object.keys(attributes).length > 0 && (
-                    <div className="mt-2 flex flex-wrap gap-1">
-                        {Object.entries(attributes).slice(0, 2).map(([key, value]) => (
-                            <span
-                                key={key}
-                                className="text-xs bg-muted px-2 py-0.5 rounded-full"
-                            >
-                                {value}
-                            </span>
-                        ))}
-                    </div>
-                )}
-            </CardContent>
+                    {/* Özellikler - Sadece ilk özellik */}
+                    {attributes && Object.values(attributes).length > 0 && (
+                        <p className="text-xs text-muted-foreground truncate">
+                            {Object.values(attributes)[0]}
+                        </p>
+                    )}
+                </CardContent>
+            </CardWrapper>
         </Card>
     )
 }

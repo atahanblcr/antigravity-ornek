@@ -9,7 +9,7 @@ import type { Product } from "@/types"
 interface AddToCartButtonProps {
     product: Product
     selectedAttributes?: Record<string, string>
-    variant?: "default" | "compact"
+    variant?: "default" | "compact" | "icon"
     className?: string
 }
 
@@ -72,16 +72,16 @@ export function AddToCartButton({
     }
 
     // Compact variant (ürün kartları için)
-    if (variant === "compact") {
+    if (variant === "compact" || variant === "icon") {
         return (
             <Button
-                variant="secondary"
+                variant={variant === "icon" ? "default" : "secondary"}
                 size="icon"
-                className={`h-9 w-9 ${className}`}
+                className={`h-9 w-9 rounded-full shadow-md ${className}`}
                 onClick={handleAdd}
             >
                 {isAdded ? (
-                    <Check className="h-4 w-4 text-green-600" />
+                    <Check className="h-4 w-4" />
                 ) : (
                     <Plus className="h-4 w-4" />
                 )}

@@ -6,6 +6,7 @@ import { StorefrontHeader } from "@/components/storefront/storefront-header"
 import { WhatsAppOrderButton } from "@/components/shared/whatsapp-order-button"
 import { CategoryCard } from "@/components/storefront/category-card"
 import { FeaturedProductsSection } from "@/components/storefront/featured-products-section"
+import { FeaturedProductsCarousel } from "@/components/storefront/featured-products-carousel"
 import type { Product, Category } from "@/types"
 
 export async function generateMetadata({ params }: { params: Promise<{ tenant: string }> }) {
@@ -97,6 +98,16 @@ export default async function StorefrontPage({ params }: { params: Promise<{ ten
         .order("created_at", { ascending: false })
         .limit(10)
 
+    // Yeni ürünleri çek (Tüm aktif ürünler)
+    const { data: latestProducts } = await supabase
+        .from("products")
+        .select("*")
+        .eq("tenant_id", tenant?.id)
+        .eq("is_active", true)
+        .is("deleted_at", null)
+        .order("created_at", { ascending: false })
+        .limit(12)
+
     return (
         <div className="min-h-screen bg-background pb-20">
             {/* Header */}
@@ -129,9 +140,19 @@ export default async function StorefrontPage({ params }: { params: Promise<{ ten
                     )}
                 </section>
 
-                {/* Kampanyalı Ürünler */}
+                {/* Kampanyalı Ürünler - Carousel (Sadece Mobilde değil, her yerde carousel) */}
                 {featuredProducts && featuredProducts.length > 0 && (
-                    <FeaturedProductsSection products={featuredProducts as Product[]} />
+                    <FeaturedProductsCarousel products={featuredProducts as Product[]} tenantSlug={resolvedParams.tenant} />
+                )}
+
+                {/* Yeni Ürünler - Tüm aktif ürünler */}
+                {latestProducts && latestProducts.length > 0 && (
+                    <section className="space-y-4">
+                        <div className="flex items-center justify-between">
+                            <h2 className="text-xl font-semibold tracking-tight">Yeni Ürünler</h2>
+                        </div>
+                        <FeaturedProductsSection products={latestProducts as Product[]} />
+                    </section>
                 )}
             </main>
 

@@ -87,7 +87,14 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
 
     // Reference.md Bölüm 3.3 - JSONB @> operatörü ile filtreleme
     if (Object.keys(filters).length > 0) {
-        query = query.contains("attributes", filters)
+        // DB'de attribute değerleri array olarak saklanıyor (ör. "Renk": ["Siyah"])
+        // URL'den gelen değerler string (ör. "Renk": "Siyah")
+        // @> operatörü için değeri array içine almalıyız: {"Renk": ["Siyah"]}
+        const arrayFilters: Record<string, string[]> = {}
+        Object.entries(filters).forEach(([key, value]) => {
+            arrayFilters[key] = [value]
+        })
+        query = query.contains("attributes", arrayFilters)
     }
 
     // Sıralama

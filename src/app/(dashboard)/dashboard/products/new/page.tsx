@@ -30,9 +30,13 @@ const productSchema = z.object({
     name: z.string().min(1, "Ürün adı zorunludur"),
     description: z.string().optional(),
     base_price: z.number().min(0, "Fiyat 0'dan küçük olamaz"),
-    sale_price: z.number().min(0).optional().nullable(),
+    // Preprocess: NaN (boş input) gelirse null yap
+    sale_price: z.preprocess(
+        (val) => (val === "" || Number.isNaN(Number(val)) ? null : Number(val)),
+        z.number().min(0, "İndirimli fiyat 0'dan küçük olamaz").nullable().optional()
+    ),
     sku: z.string().optional(),
-    category_id: z.string().optional(),
+    category_id: z.string().min(1, "Kategori seçimi zorunludur").optional(),
     is_active: z.boolean(),
     is_featured: z.boolean().default(false),
 })
@@ -139,8 +143,8 @@ export default function NewProductPage() {
             sku = `${prefix}-${randomPart}`
         }
 
-        // Sale price: boş veya NaN ise null yap
-        const sale_price = data.sale_price && !isNaN(data.sale_price) ? data.sale_price : null
+        // Sale price: null kontrolü
+        const sale_price = data.sale_price !== null ? data.sale_price : null
 
         const submitData = {
             ...data,
@@ -187,6 +191,9 @@ export default function NewProductPage() {
                                     <option key={cat.id} value={cat.id}>{cat.name}</option>
                                 ))}
                             </select>
+                            {errors.category_id && (
+                                <p className="text-sm text-destructive">{errors.category_id.message}</p>
+                            )}
                         </div>
 
                         <div className="grid sm:grid-cols-2 gap-4">
@@ -229,6 +236,9 @@ export default function NewProductPage() {
                                     step="0.01"
                                     {...register("base_price", { valueAsNumber: true })}
                                 />
+                                {errors.base_price && (
+                                    <p className="text-sm text-destructive">{errors.base_price.message}</p>
+                                )}
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="sale_price">İndirimli Fiyat (₺)</Label>
@@ -238,6 +248,9 @@ export default function NewProductPage() {
                                     step="0.01"
                                     {...register("sale_price", { valueAsNumber: true })}
                                 />
+                                {errors.sale_price && (
+                                    <p className="text-sm text-destructive">{errors.sale_price.message}</p>
+                                )}
                             </div>
                         </div>
 

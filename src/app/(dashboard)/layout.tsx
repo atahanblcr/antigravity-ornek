@@ -1,30 +1,14 @@
 import * as React from "react"
 import Link from "next/link"
-import { redirect } from "next/navigation"
-import {
-    LayoutDashboard,
-    Package,
-    FolderOpen,
-    ShoppingCart,
-    Settings,
-    Store,
-    LogOut,
-    Menu,
-} from "lucide-react"
+import { Menu, Store } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { DesktopSidebar } from "@/components/dashboard/desktop-sidebar"
+import { MobileNav } from "@/components/dashboard/mobile-nav"
 
 interface DashboardLayoutProps {
     children: React.ReactNode
 }
-
-const NAV_ITEMS = [
-    { href: "/dashboard", label: "Genel Bakış", icon: LayoutDashboard },
-    { href: "/dashboard/products", label: "Ürünler", icon: Package },
-    { href: "/dashboard/categories", label: "Kategoriler", icon: FolderOpen },
-    { href: "/dashboard/orders", label: "Siparişler", icon: ShoppingCart },
-    { href: "/dashboard/settings", label: "Ayarlar", icon: Settings },
-]
 
 /**
  * Dashboard Layout
@@ -33,9 +17,7 @@ const NAV_ITEMS = [
  * Masaüstü: Sabit sidebar
  */
 export default async function DashboardLayout({ children }: DashboardLayoutProps) {
-    // TODO: Auth kontrolü
-    // const session = await getSession()
-    // if (!session) redirect("/login")
+    // TODO: Auth kontrolü middleware'de yapılıyor.
 
     return (
         <div className="min-h-screen bg-muted/30">
@@ -75,74 +57,6 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
                         {children}
                     </div>
                 </main>
-            </div>
-        </div>
-    )
-}
-
-function DesktopSidebar() {
-    return (
-        <div className="flex flex-col h-full bg-background border-r">
-            {/* Logo */}
-            <div className="flex items-center h-16 px-4 border-b">
-                <Store className="h-6 w-6 text-primary mr-2" />
-                <span className="font-bold text-lg">Dijital Vitrin</span>
-            </div>
-
-            {/* Navigation */}
-            <nav className="flex-1 px-3 py-4 space-y-1">
-                {NAV_ITEMS.map((item) => (
-                    <Link
-                        key={item.href}
-                        href={item.href}
-                        className="flex items-center gap-3 px-3 py-2 text-sm rounded-lg hover:bg-muted transition-colors"
-                    >
-                        <item.icon className="h-4 w-4" />
-                        {item.label}
-                    </Link>
-                ))}
-            </nav>
-
-            {/* Footer */}
-            <div className="p-3 border-t">
-                <Button variant="ghost" className="w-full justify-start gap-3" size="sm">
-                    <LogOut className="h-4 w-4" />
-                    Çıkış Yap
-                </Button>
-            </div>
-        </div>
-    )
-}
-
-function MobileNav() {
-    return (
-        <div className="flex flex-col h-full">
-            {/* Logo */}
-            <div className="flex items-center h-14 px-4 border-b">
-                <Store className="h-6 w-6 text-primary mr-2" />
-                <span className="font-bold">Dijital Vitrin</span>
-            </div>
-
-            {/* Navigation */}
-            <nav className="flex-1 px-3 py-4 space-y-1">
-                {NAV_ITEMS.map((item) => (
-                    <Link
-                        key={item.href}
-                        href={item.href}
-                        className="flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg hover:bg-muted transition-colors"
-                    >
-                        <item.icon className="h-4 w-4" />
-                        {item.label}
-                    </Link>
-                ))}
-            </nav>
-
-            {/* Footer */}
-            <div className="p-3 border-t">
-                <Button variant="ghost" className="w-full justify-start gap-3" size="sm">
-                    <LogOut className="h-4 w-4" />
-                    Çıkış Yap
-                </Button>
             </div>
         </div>
     )
