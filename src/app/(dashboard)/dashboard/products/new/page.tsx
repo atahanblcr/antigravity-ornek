@@ -34,6 +34,7 @@ const productSchema = z.object({
     sku: z.string().optional(),
     category_id: z.string().optional(),
     is_active: z.boolean(),
+    is_featured: z.boolean().default(false),
 })
 
 type ProductFormData = z.infer<typeof productSchema>
@@ -102,6 +103,7 @@ export default function NewProductPage() {
             description: "",
             base_price: 0,
             is_active: true,
+            is_featured: false,
         },
     })
 
@@ -128,8 +130,22 @@ export default function NewProductPage() {
     const onSubmit = (data: ProductFormData) => {
         if (!tenantId) return
 
+        // SKU otomatik oluştur (eğer kullanıcı girmemişse)
+        let sku = data.sku
+        if (!sku || sku.trim() === "") {
+            // Kategori slug'ından prefix al veya "PRD" kullan
+            const prefix = selectedCategory?.slug?.substring(0, 3).toUpperCase() || "PRD"
+            const randomPart = Math.random().toString(36).substring(2, 8).toUpperCase()
+            sku = `${prefix}-${randomPart}`
+        }
+
+        // Sale price: boş veya NaN ise null yap
+        const sale_price = data.sale_price && !isNaN(data.sale_price) ? data.sale_price : null
+
         const submitData = {
             ...data,
+            sale_price,
+            sku,
             slug: generateSlug(data.name),
             attributes,
         }
@@ -184,8 +200,11 @@ export default function NewProductPage() {
                                 )}
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="sku">Stok Kodu (SKU)</Label>
-                                <Input id="sku" {...register("sku")} placeholder="TSH-001" />
+                                <Label htmlFor="sku">Stok Kodu (SKU) - Opsiyonel</Label>
+                                <Input id="sku" {...register("sku")} placeholder="Boş bırakılırsa otomatik oluşturulur" />
+                                <p className="text-xs text-muted-foreground">
+                                    Boş bırakırsanız sistem otomatik kod oluşturur
+                                </p>
                             </div>
                         </div>
 
@@ -222,14 +241,25 @@ export default function NewProductPage() {
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-2">
-                            <input
-                                type="checkbox"
-                                id="is_active"
-                                {...register("is_active")}
-                                className="h-4 w-4"
-                            />
-                            <Label htmlFor="is_active">Aktif (Vitrinde görünür)</Label>
+                        <div className="flex flex-col gap-3">
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="checkbox"
+                                    id="is_active"
+                                    {...register("is_active")}
+                                    className="h-4 w-4"
+                                />
+                                <Label htmlFor="is_active">Aktif (Vitrinde görünür)</Label>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="checkbox"
+                                    id="is_featured"
+                                    {...register("is_featured")}
+                                    className="h-4 w-4"
+                                />
+                                <Label htmlFor="is_featured">Kampanyalı Ürün (Ana sayfada öne çıkar)</Label>
+                            </div>
                         </div>
                     </CardContent>
                 </Card>

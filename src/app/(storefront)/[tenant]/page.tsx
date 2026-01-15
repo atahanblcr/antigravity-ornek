@@ -5,8 +5,7 @@ import { cookies } from "next/headers"
 import { StorefrontHeader } from "@/components/storefront/storefront-header"
 import { WhatsAppOrderButton } from "@/components/shared/whatsapp-order-button"
 import { CategoryCard } from "@/components/storefront/category-card"
-import { HorizontalScrollList } from "@/components/shared/horizontal-scroll-list"
-import { FeaturedProducts } from "@/components/storefront/featured-products"
+import { FeaturedProductsSection } from "@/components/storefront/featured-products-section"
 import type { Product, Category } from "@/types"
 
 export async function generateMetadata({ params }: { params: Promise<{ tenant: string }> }) {
@@ -87,12 +86,13 @@ export default async function StorefrontPage({ params }: { params: Promise<{ ten
         .eq("is_active", true)
         .order("sort_order", { ascending: true })
 
-    // Öne çıkan ürünleri çek (son eklenenler)
+    // Kampanyalı ürünleri çek (is_featured=true)
     const { data: featuredProducts } = await supabase
         .from("products")
         .select("*")
         .eq("tenant_id", tenant?.id)
         .eq("is_active", true)
+        .eq("is_featured", true)
         .is("deleted_at", null)
         .order("created_at", { ascending: false })
         .limit(10)
@@ -129,22 +129,10 @@ export default async function StorefrontPage({ params }: { params: Promise<{ ten
                     )}
                 </section>
 
-                {/* Öne Çıkanlar */}
-                <section className="space-y-4">
-                    <div className="flex items-center justify-between">
-                        <h2 className="text-xl font-semibold tracking-tight">Öne Çıkanlar</h2>
-                    </div>
-
-                    {featuredProducts && featuredProducts.length > 0 ? (
-                        <HorizontalScrollList>
-                            <FeaturedProducts products={featuredProducts as Product[]} tenantSlug={resolvedParams.tenant} />
-                        </HorizontalScrollList>
-                    ) : (
-                        <div className="text-center py-8 text-muted-foreground bg-muted/30 rounded-lg">
-                            Henüz ürün eklenmemiş.
-                        </div>
-                    )}
-                </section>
+                {/* Kampanyalı Ürünler */}
+                {featuredProducts && featuredProducts.length > 0 && (
+                    <FeaturedProductsSection products={featuredProducts as Product[]} />
+                )}
             </main>
 
             {/* WhatsApp Sipariş Butonu */}

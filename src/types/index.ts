@@ -77,6 +77,7 @@ export interface Product {
     images?: string[]
     attributes: Record<string, string>
     is_active: boolean
+    is_featured?: boolean
     deleted_at?: string
     created_at: string
     updated_at: string

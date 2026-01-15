@@ -46,6 +46,7 @@ interface ProductData {
     image_url?: string
     attributes?: Record<string, string>
     is_active?: boolean
+    is_featured?: boolean
 }
 
 /**
@@ -198,7 +199,10 @@ export function useCreateCategory() {
             return category
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["categories"] })
+            queryClient.invalidateQueries({
+                queryKey: ["categories"],
+                exact: false
+            })
             addToast("Kategori başarıyla oluşturuldu", "success")
             router.push("/dashboard/categories")
         },
@@ -231,7 +235,10 @@ export function useUpdateCategory() {
             return category
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["categories"] })
+            queryClient.invalidateQueries({
+                queryKey: ["categories"],
+                exact: false
+            })
             addToast("Kategori başarıyla güncellendi", "success")
             router.push("/dashboard/categories")
         },
@@ -250,21 +257,41 @@ export function useDeleteCategory() {
 
     return useMutation({
         mutationFn: async (categoryId: string) => {
+
             const supabase = getSupabase()
 
             // Soft delete
-            const { error } = await supabase
+            const { data, error } = await supabase
                 .from("categories")
                 .update({ deleted_at: new Date().toISOString(), is_active: false })
                 .eq("id", categoryId)
+                .select()
 
-            if (error) throw error
+
+
+            if (error) {
+
+                throw error
+            }
+
+            // Eğer data boşsa, RLS politikası izin vermemiş demektir
+            if (!data || data.length === 0) {
+                throw new Error('Kategori güncellenemedi. Yetki hatası olabilir.')
+            }
+
+            return categoryId
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["categories"] })
+
             addToast("Kategori başarıyla silindi", "success")
+
+            // Sayfayı tamamen yenile
+            setTimeout(() => {
+                window.location.reload()
+            }, 500) // Toast mesajını göstermek için kısa bir gecikme
         },
         onError: (error: Error) => {
+
             addToast(`Hata: ${error.message}`, "error")
         }
     })

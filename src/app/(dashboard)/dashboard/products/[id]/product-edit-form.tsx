@@ -21,6 +21,7 @@ const productSchema = z.object({
     category_id: z.string().optional().nullable(),
     sku: z.string().optional().nullable(),
     is_active: z.boolean(),
+    is_featured: z.boolean().default(false),
 })
 
 type ProductFormData = z.infer<typeof productSchema>
@@ -53,15 +54,19 @@ export function ProductEditForm({ product, categories }: ProductEditFormProps) {
             category_id: product.category_id ?? null,
             sku: product.sku ?? null,
             is_active: product.is_active,
+            is_featured: product.is_featured ?? false,
         },
     })
 
     const onSubmit = (data: ProductFormData) => {
+        // Sale price: boş veya NaN ise null yap
+        const sale_price = data.sale_price && !isNaN(data.sale_price) ? data.sale_price : null
+
         updateProduct.mutate({
             id: product.id,
             data: {
                 ...data,
-                sale_price: data.sale_price || undefined,
+                sale_price,
                 category_id: data.category_id || undefined,
                 sku: data.sku || undefined,
             },
@@ -157,14 +162,25 @@ export function ProductEditForm({ product, categories }: ProductEditFormProps) {
                     </div>
 
                     {/* Aktif */}
-                    <div className="flex items-center gap-2">
-                        <input
-                            type="checkbox"
-                            id="is_active"
-                            {...register("is_active")}
-                            className="h-4 w-4 rounded border-input"
-                        />
-                        <Label htmlFor="is_active">Aktif (Vitrinde görünür)</Label>
+                    <div className="flex flex-col gap-3">
+                        <div className="flex items-center gap-2">
+                            <input
+                                type="checkbox"
+                                id="is_active"
+                                {...register("is_active")}
+                                className="h-4 w-4 rounded border-input"
+                            />
+                            <Label htmlFor="is_active">Aktif (Vitrinde görünür)</Label>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <input
+                                type="checkbox"
+                                id="is_featured"
+                                {...register("is_featured")}
+                                className="h-4 w-4 rounded border-input"
+                            />
+                            <Label htmlFor="is_featured">Kampanyalı Ürün (Ana sayfada öne çıkar)</Label>
+                        </div>
                     </div>
                 </CardContent>
             </Card>

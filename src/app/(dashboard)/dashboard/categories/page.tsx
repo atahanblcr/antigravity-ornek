@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -13,6 +14,7 @@ import {
     FolderOpen,
 } from "lucide-react"
 import { useCategories } from "@/hooks/use-categories"
+import { useDeleteCategory } from "@/hooks/use-mutations"
 import { createBrowserClient } from "@supabase/ssr"
 import { PageSkeleton } from "@/components/ui/skeleton"
 
@@ -21,8 +23,11 @@ import { PageSkeleton } from "@/components/ui/skeleton"
  * Reference.md - Real Data Integration
  */
 export default function CategoriesPage() {
+    const router = useRouter()
     const [searchQuery, setSearchQuery] = React.useState("")
     const [tenantId, setTenantId] = React.useState<string | null>(null)
+    const [deleteConfirmId, setDeleteConfirmId] = React.useState<string | null>(null)
+    const deleteCategory = useDeleteCategory()
 
     React.useEffect(() => {
         const url = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -47,6 +52,25 @@ export default function CategoriesPage() {
     const filteredCategories = categories?.filter((category) =>
         category.name.toLowerCase().includes(searchQuery.toLowerCase())
     ) || []
+
+    const handleEdit = (categoryId: string) => {
+        router.push(`/dashboard/categories/${categoryId}`)
+    }
+
+    const handleDeleteClick = (categoryId: string) => {
+        setDeleteConfirmId(categoryId)
+    }
+
+    const handleDeleteConfirm = () => {
+        if (deleteConfirmId) {
+            deleteCategory.mutate(deleteConfirmId)
+            setDeleteConfirmId(null)
+        }
+    }
+
+    const handleDeleteCancel = () => {
+        setDeleteConfirmId(null)
+    }
 
     if (isLoading && !categories) {
         return <PageSkeleton />
@@ -110,18 +134,47 @@ export default function CategoriesPage() {
                                     {/* Ürün sayısı join gerektirir, şimdilik statik veya backend count */}
                                     -
                                 </span>
-                                <div className="flex items-center gap-1">
-                                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                                        <Pencil className="h-4 w-4" />
-                                    </Button>
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-8 w-8 text-destructive"
-                                    >
-                                        <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                </div>
+                                {deleteConfirmId === category.id ? (
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-xs text-destructive">Emin misiniz?</span>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={handleDeleteConfirm}
+                                            disabled={deleteCategory.isPending}
+                                            className="h-7 text-xs text-destructive hover:text-destructive"
+                                        >
+                                            Evet
+                                        </Button>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={handleDeleteCancel}
+                                            className="h-7 text-xs"
+                                        >
+                                            İptal
+                                        </Button>
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center gap-1">
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-8 w-8"
+                                            onClick={() => handleEdit(category.id)}
+                                        >
+                                            <Pencil className="h-4 w-4" />
+                                        </Button>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-8 w-8 text-destructive"
+                                            onClick={() => handleDeleteClick(category.id)}
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                )}
                             </div>
                         </CardContent>
                     </Card>
