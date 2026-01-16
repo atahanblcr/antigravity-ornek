@@ -16,7 +16,7 @@ interface ProductCardProps {
  * Minimal Vitrin Tasarımı - Apple Tarzı
  */
 export const ProductCard = ({ product, tenantSlug }: ProductCardProps) => {
-    const hasDiscount = product.sale_price && product.sale_price < product.base_price
+    const hasDiscount = !!(product.sale_price && product.sale_price < product.base_price)
     const displayPrice = product.sale_price ?? product.base_price
     const discountPercent = hasDiscount
         ? Math.round(((product.base_price - product.sale_price!) / product.base_price) * 100)

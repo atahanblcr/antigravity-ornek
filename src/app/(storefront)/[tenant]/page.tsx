@@ -105,7 +105,7 @@ export default async function StorefrontPage({ params }: { params: Promise<{ ten
         .eq("is_active", true)
         .is("deleted_at", null)
         .order("created_at", { ascending: false })
-        .limit(12)
+        .limit(100)
 
     return (
         <div className="min-h-screen bg-background">

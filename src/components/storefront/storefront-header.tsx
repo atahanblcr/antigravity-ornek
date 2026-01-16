@@ -4,7 +4,6 @@ import * as React from "react"
 import Image from "next/image"
 import { Store, MapPin, Phone, ExternalLink } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { CartDrawer } from "@/components/storefront/cart-drawer"
 
 interface StorefrontHeaderProps {
     name: string
@@ -96,12 +95,6 @@ export const StorefrontHeader = ({
                         >
                             <ExternalLink className="h-5 w-5" />
                         </Button>
-
-                        <CartDrawer
-                            storeName={name}
-                            phoneNumber={whatsappNumber}
-                            tenantId={tenantId}
-                        />
                     </div>
                 </div>
             </div>
