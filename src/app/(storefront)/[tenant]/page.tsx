@@ -5,9 +5,7 @@ import { cookies } from "next/headers"
 import { StorefrontHeader } from "@/components/storefront/storefront-header"
 import { HeroSection } from "@/components/storefront/hero-section"
 import { WhatsAppOrderButton } from "@/components/shared/whatsapp-order-button"
-import { CategoryCard } from "@/components/storefront/category-card"
-import { FeaturedProductsSection } from "@/components/storefront/featured-products-section"
-import { FeaturedProductsCarousel } from "@/components/storefront/featured-products-carousel"
+import { StorefrontClient } from "@/components/storefront/storefront-client"
 import type { Product, Category } from "@/types"
 
 export async function generateMetadata({ params }: { params: Promise<{ tenant: string }> }) {
@@ -126,49 +124,17 @@ export default async function StorefrontPage({ params }: { params: Promise<{ ten
                 description={tenant?.description || "En seçkin ürünleri keşfedin."}
             />
 
-            <main className="container pb-20 space-y-16">
-
+            <main className="pb-20">
                 {/* ID for anchor link scroll */}
                 <div id="products" className="pt-8"></div>
 
-                {/* Kategoriler */}
-                <section className="space-y-6">
-                    <div className="text-center space-y-2">
-                        <h2 className="text-2xl md:text-3xl font-bold tracking-tight">Koleksiyonlar</h2>
-                        <div className="h-1 w-20 bg-primary mx-auto rounded-full opacity-20" />
-                    </div>
-
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8 px-4">
-                        {categories?.map((category) => (
-                            <CategoryCard
-                                key={category.id}
-                                name={category.name}
-                                slug={category.slug}
-                                productCount={0}
-                                tenantSlug={resolvedParams.tenant}
-                            />
-                        ))}
-                    </div>
-                    {(!categories || categories.length === 0) && (
-                        <div className="text-center py-12 text-muted-foreground bg-secondary/30 rounded-2xl mx-4">
-                            Henüz kategori eklenmemiş.
-                        </div>
-                    )}
-                </section>
-
-                {/* Kampanyalı Ürünler - Carousel (Sadece Mobilde değil, her yerde carousel) */}
-                {featuredProducts && featuredProducts.length > 0 && (
-                    <FeaturedProductsCarousel products={featuredProducts as Product[]} tenantSlug={resolvedParams.tenant} />
-                )}
-
-                {/* Yeni Ürünler - Tüm aktif ürünler */}
-                {latestProducts && latestProducts.length > 0 && (
-                    <FeaturedProductsSection
-                        products={latestProducts as Product[]}
-                        title="✨ Yeni Ürünler"
-                        description="Koleksiyonumuza eklenen en son parçaları keşfedin"
-                    />
-                )}
+                {/* Storefront Content with Sticky Categories */}
+                <StorefrontClient
+                    categories={(categories as Category[]) || []}
+                    featuredProducts={(featuredProducts as Product[]) || []}
+                    allProducts={(latestProducts as Product[]) || []}
+                    tenantSlug={resolvedParams.tenant}
+                />
             </main>
 
             {/* WhatsApp Sipariş Butonu */}

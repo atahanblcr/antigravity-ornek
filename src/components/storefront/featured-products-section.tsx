@@ -9,6 +9,7 @@ interface FeaturedProductsSectionProps {
     products: Product[]
     title?: string
     description?: string
+    tenantSlug?: string
 }
 
 /**
@@ -17,7 +18,8 @@ interface FeaturedProductsSectionProps {
 export function FeaturedProductsSection({
     products,
     title = "🔥 Kampanyalı Ürünler",
-    description = "Özel fırsatları kaçırmayın!"
+    description = "Özel fırsatları kaçırmayın!",
+    tenantSlug
 }: FeaturedProductsSectionProps) {
     if (!products || products.length === 0) {
         return null
@@ -43,7 +45,7 @@ export function FeaturedProductsSection({
                                 key={product.id}
                                 className="flex-shrink-0 w-[280px] md:w-auto"
                             >
-                                <ProductCard product={product} />
+                                <ProductCard product={product} tenantSlug={tenantSlug} />
                             </div>
                         ))}
                     </div>

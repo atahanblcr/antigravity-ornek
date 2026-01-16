@@ -6,7 +6,7 @@ import Link from "next/link"
 import { Package, ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { AddToCartButton } from "@/components/storefront/add-to-cart-button"
+
 import { WhatsAppOrderButton } from "@/components/shared/whatsapp-order-button"
 import type { Product, Tenant } from "@/types"
 
@@ -222,14 +222,7 @@ export function ProductDetailClient({
                             </p>
                         )}
 
-                        {/* Sepete Ekle Butonu */}
-                        <div className="pt-4">
-                            <AddToCartButton
-                                product={product}
-                                selectedAttributes={selectedAttributes}
-                                className="w-full h-12 text-base"
-                            />
-                        </div>
+
                     </div>
                 </div>
 
