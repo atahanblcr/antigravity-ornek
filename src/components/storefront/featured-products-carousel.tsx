@@ -11,9 +11,6 @@ interface FeaturedProductsCarouselProps {
 }
 
 export function FeaturedProductsCarousel({ products, tenantSlug }: FeaturedProductsCarouselProps) {
-    // Duplicate products for seamless infinite loop
-    const duplicatedProducts = [...products, ...products, ...products]
-
     return (
         <section className="relative w-full overflow-hidden py-12 bg-gradient-to-br from-slate-50 via-white to-slate-50">
             <div className="mb-8 text-center">
@@ -23,58 +20,19 @@ export function FeaturedProductsCarousel({ products, tenantSlug }: FeaturedProdu
                 <p className="mt-2 text-slate-600">Sürekli güncellenen kampanyalı ürünlerimiz</p>
             </div>
 
-            {/* Infinite Marquee Container */}
-            <div className="relative">
-                {/* Gradient overlays for fade effect */}
-                <div className="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none" />
-                <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none" />
-
-                <div className="marquee-container group">
-                    <div className="marquee-content">
-                        {duplicatedProducts.map((product, index) => (
+            {/* Grid Container */}
+            <div className="container relative mx-auto px-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                    {products.map((product, index) => (
+                        <div key={`${product.id}-${index}`} className="flex justify-center">
                             <MinimalistProductCard
-                                key={`${product.id}-${index}`}
                                 product={product}
                                 tenantSlug={tenantSlug}
                             />
-                        ))}
-                    </div>
+                        </div>
+                    ))}
                 </div>
             </div>
-
-            <style jsx>{`
-                .marquee-container {
-                    display: flex;
-                    overflow: hidden;
-                    user-select: none;
-                }
-
-                .marquee-content {
-                    display: flex;
-                    gap: 2rem;
-                    animation: scroll 60s linear infinite;
-                    will-change: transform;
-                }
-
-                .marquee-container:hover .marquee-content {
-                    animation-play-state: paused;
-                }
-
-                @keyframes scroll {
-                    0% {
-                        transform: translateX(0);
-                    }
-                    100% {
-                        transform: translateX(-33.333%);
-                    }
-                }
-
-                @media (max-width: 768px) {
-                    .marquee-content {
-                        animation-duration: 40s;
-                    }
-                }
-            `}</style>
         </section>
     )
 }
@@ -95,7 +53,7 @@ function MinimalistProductCard({ product, tenantSlug }: MinimalistProductCardPro
     return (
         <Link
             href={href}
-            className="group/card flex-shrink-0 w-[280px] md:w-[320px] block"
+            className="group/card w-full block"
         >
             <div className="relative overflow-hidden rounded-2xl bg-white shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2">
                 {/* Image Container */}
@@ -105,7 +63,7 @@ function MinimalistProductCard({ product, tenantSlug }: MinimalistProductCardPro
                         alt={product.name}
                         fill
                         className="object-cover transition-transform duration-700 group-hover/card:scale-110"
-                        sizes="(max-width: 768px) 280px, 320px"
+                        sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
                     />
 
                     {/* Overlay gradient on hover */}

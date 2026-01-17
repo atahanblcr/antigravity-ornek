@@ -6,6 +6,8 @@ import { StorefrontHeader } from "@/components/storefront/storefront-header"
 import { HeroSection } from "@/components/storefront/hero-section"
 import { WhatsAppOrderButton } from "@/components/shared/whatsapp-order-button"
 import { StorefrontClient } from "@/components/storefront/storefront-client"
+import { ServicesSection } from "@/components/storefront/services-section"
+import { StorefrontFooter } from "@/components/storefront/storefront-footer"
 import type { Product, Category } from "@/types"
 
 export async function generateMetadata({ params }: { params: Promise<{ tenant: string }> }) {
@@ -78,6 +80,8 @@ export default async function StorefrontPage({ params }: { params: Promise<{ ten
 
     const tenant = tenantData
 
+
+
     // Kategorileri çek
     const { data: categories } = await supabase
         .from("categories")
@@ -122,6 +126,7 @@ export default async function StorefrontPage({ params }: { params: Promise<{ ten
             <HeroSection
                 name={tenant?.name || resolvedParams.tenant}
                 description={tenant?.description || "En seçkin ürünleri keşfedin."}
+                heroImageUrl={tenant?.hero_image_url}
             />
 
             <main className="pb-20">
@@ -137,14 +142,15 @@ export default async function StorefrontPage({ params }: { params: Promise<{ ten
                 />
             </main>
 
-            {/* WhatsApp Sipariş Butonu */}
-            {tenant?.whatsapp_number && (
-                <WhatsAppOrderButton
-                    tenantId={tenant?.id || ""}
-                    phoneNumber={tenant.whatsapp_number}
-                    storeName={tenant.name}
-                />
-            )}
+            {/* Services Section */}
+            <ServicesSection />
+
+            {/* Footer */}
+            <StorefrontFooter
+                tenantName={tenant?.name || resolvedParams.tenant}
+                whatsappNumber={tenant?.whatsapp_number}
+                description={tenant?.description}
+            />
         </div>
     )
 }

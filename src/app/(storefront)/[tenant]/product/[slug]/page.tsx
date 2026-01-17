@@ -7,6 +7,8 @@ import { ChevronLeft, Share2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ShareButton } from "@/components/storefront/share-button"
 import { ProductDetailClient } from "./product-detail-client"
+import { StorefrontHeader } from "@/components/storefront/storefront-header"
+import { StorefrontFooter } from "@/components/storefront/storefront-footer"
 import type { Metadata } from "next"
 
 interface PageProps {
@@ -108,7 +110,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
     // İlgili ürünleri çek (aynı kategoriden)
     const { data: relatedProducts } = await supabase
         .from("products")
-        .select("id, name, slug, base_price, sale_price, image_url, images")
+        .select("id, name, slug, base_price, sale_price, image_url, images, attributes")
         .eq("tenant_id", tenantData.id)
         .eq("category_id", product.category_id)
         .neq("id", product.id)
@@ -117,29 +119,29 @@ export default async function ProductDetailPage({ params }: PageProps) {
         .limit(4)
 
     return (
-        <div className="min-h-screen bg-background pb-24">
-            {/* Navigation */}
-            <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-sm border-b">
-                <div className="container px-4 h-14 flex items-center justify-between">
-                    <Button variant="ghost" size="sm" asChild>
-                        <Link href={`/${tenant}`} className="gap-2">
-                            <ChevronLeft className="h-4 w-4" />
-                            <span className="hidden sm:inline">{tenantData.name}</span>
-                        </Link>
-                    </Button>
-
-                    <ShareButton
-                        title={product.name}
-                        storeName={tenantData.name}
-                    />
-                </div>
-            </header>
+        <div className="min-h-screen bg-background flex flex-col">
+            {/* Header */}
+            <StorefrontHeader
+                name={tenantData.name}
+                slug={tenant}
+                tenantId={tenantData.id}
+                whatsappNumber={tenantData.whatsapp_number}
+                description={tenantData.description}
+                logoUrl={tenantData.logo_url}
+            />
 
             {/* Client Component - İnteraktif kısımlar */}
             <ProductDetailClient
                 product={product}
                 tenant={tenantData}
                 relatedProducts={relatedProducts || []}
+            />
+
+            {/* Footer */}
+            <StorefrontFooter
+                tenantName={tenantData.name}
+                whatsappNumber={tenantData.whatsapp_number}
+                description={tenantData.description}
             />
         </div>
     )

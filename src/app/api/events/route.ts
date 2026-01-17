@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
         )
 
         // Event kaydet
-        const { data, error } = await supabase
+        const { error } = await supabase
             .from("order_events")
             .insert({
                 tenant_id,
@@ -68,8 +68,6 @@ export async function POST(request: NextRequest) {
                 cart_data,
                 session_id: session_id || null,
             })
-            .select()
-            .single()
 
         if (error) {
             console.error("Event insert error:", error)
@@ -79,7 +77,7 @@ export async function POST(request: NextRequest) {
             )
         }
 
-        return NextResponse.json({ success: true, data })
+        return NextResponse.json({ success: true })
     } catch (error) {
         console.error("Events API error:", error)
         return NextResponse.json(

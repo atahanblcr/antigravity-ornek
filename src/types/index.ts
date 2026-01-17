@@ -12,6 +12,7 @@ export interface Tenant {
     whatsapp_number: string
     location?: string
     logo_url?: string
+    hero_image_url?: string
     settings: TenantSettings
     is_active: boolean
     created_at: string

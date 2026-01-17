@@ -61,29 +61,29 @@ export const WhatsAppOrderButton = ({
         }
     }, [storeName, phoneNumber, formattedPhone, productName, productPrice, selectedAttributes])
 
-    const handleClick = async (e: React.MouseEvent) => {
+    const handleClick = (e: React.MouseEvent) => {
         e.preventDefault()
 
-        try {
-            await fetch('/api/events', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    tenant_id: tenantId,
-                    event_type: "order_initiated",
-                    payload: {
-                        store: storeName,
-                        source: window.location.pathname,
-                        product: productName || null,
-                        attributes: selectedAttributes || null
-                    }
-                })
-            })
-        } catch (error) {
-            console.error("Analytics error:", error)
-        }
-
+        // 1. WhatsApp linkini hemen aç (Popup blocker'a takılmamak için)
         window.open(whatsappUrl, '_blank')
+
+        // 2. Analitik olayını arka planda gönder (Fire-and-forget)
+        fetch('/api/events', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                tenant_id: tenantId,
+                event_type: "order_initiated",
+                payload: {
+                    store: storeName,
+                    source: window.location.pathname,
+                    product: productName || null,
+                    attributes: selectedAttributes || null
+                }
+            })
+        }).catch(error => {
+            console.error("Analytics error:", error)
+        })
     }
 
     // Buton metni - ürün varsa "Sipariş Ver", yoksa "İletişime Geç"
