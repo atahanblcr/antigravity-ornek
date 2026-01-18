@@ -22,6 +22,7 @@ const productSchema = z.object({
     sku: z.string().optional().nullable(),
     is_active: z.boolean(),
     is_featured: z.boolean().default(false),
+    attributes: z.any(), // Dinamik alanlar için
 })
 
 type ProductFormData = z.infer<typeof productSchema>
@@ -42,6 +43,7 @@ export function ProductEditForm({ product, categories }: ProductEditFormProps) {
     const {
         register,
         handleSubmit,
+        watch,
         formState: { errors, isDirty },
     } = useForm<ProductFormData>({
         resolver: zodResolver(productSchema) as any,
@@ -55,8 +57,12 @@ export function ProductEditForm({ product, categories }: ProductEditFormProps) {
             sku: product.sku ?? null,
             is_active: product.is_active,
             is_featured: product.is_featured ?? false,
+            attributes: product.attributes || {},
         },
     })
+
+    const selectedCategoryId = watch("category_id")
+    const selectedCategory = categories.find((c) => c.id === selectedCategoryId)
 
     const onSubmit = (data: ProductFormData) => {
         // Sale price: boş veya NaN ise null yap
@@ -129,6 +135,44 @@ export function ProductEditForm({ product, categories }: ProductEditFormProps) {
                             ))}
                         </select>
                     </div>
+
+                    {/* Dinamik Özellikler */}
+                    {selectedCategory?.attribute_schema && selectedCategory.attribute_schema.length > 0 && (
+                        <div className="space-y-4 pt-4 border-t">
+                            <h3 className="font-medium text-sm text-muted-foreground">
+                                {selectedCategory.name} Özellikleri
+                            </h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {selectedCategory.attribute_schema.map((attr) => (
+                                    <div key={attr.key} className="space-y-2">
+                                        <Label htmlFor={`attr-${attr.key}`}>
+                                            {attr.key} {attr.required && "*"}
+                                        </Label>
+                                        {attr.type === "select" ? (
+                                            <select
+                                                id={`attr-${attr.key}`}
+                                                {...register(`attributes.${attr.key}`)}
+                                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                            >
+                                                <option value="">Seçiniz</option>
+                                                {attr.options?.map((opt) => (
+                                                    <option key={opt} value={opt}>
+                                                        {opt}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        ) : (
+                                            <Input
+                                                id={`attr-${attr.key}`}
+                                                type={attr.type === "number" ? "number" : "text"}
+                                                {...register(`attributes.${attr.key}`)}
+                                            />
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
 
                     {/* Fiyatlar */}
                     <div className="grid grid-cols-2 gap-4">

@@ -7,8 +7,7 @@ import { Button } from "@/components/ui/button"
 import {
     Package,
     FolderOpen,
-    ShoppingCart,
-    TrendingUp,
+
     Eye,
     Plus,
     ExternalLink,
@@ -17,8 +16,7 @@ import {
 interface DashboardStats {
     totalProducts: number
     totalCategories: number
-    todayOrders: number
-    weekOrders: number
+
 }
 
 async function getDashboardStats(): Promise<DashboardStats | null> {
@@ -57,63 +55,16 @@ async function getDashboardStats(): Promise<DashboardStats | null> {
         .eq("is_active", true)
         .is("deleted_at", null)
 
-    // Bugünkü siparişler
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    const { count: todayOrdersCount } = await supabase
-        .from("order_events")
-        .select("*", { count: "exact", head: true })
-        .eq("event_type", "initiated")
-        .gte("created_at", today.toISOString())
 
-    // Bu haftaki siparişler
-    const weekAgo = new Date()
-    weekAgo.setDate(weekAgo.getDate() - 7)
-    const { count: weekOrdersCount } = await supabase
-        .from("order_events")
-        .select("*", { count: "exact", head: true })
-        .eq("event_type", "initiated")
-        .gte("created_at", weekAgo.toISOString())
 
     return {
         totalProducts: productsCount || 0,
         totalCategories: categoriesCount || 0,
-        todayOrders: todayOrdersCount || 0,
-        weekOrders: weekOrdersCount || 0,
+
     }
 }
 
-async function getRecentOrders() {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-    if (!supabaseUrl || !supabaseAnonKey) {
-        return []
-    }
-
-    const cookieStore = await cookies()
-    const supabase = createServerClient(
-        supabaseUrl,
-        supabaseAnonKey,
-        {
-            cookies: {
-                getAll() {
-                    return cookieStore.getAll()
-                },
-                setAll() { },
-            },
-        }
-    )
-
-    const { data } = await supabase
-        .from("order_events")
-        .select("*")
-        .eq("event_type", "initiated")
-        .order("created_at", { ascending: false })
-        .limit(5)
-
-    return data || []
-}
 
 async function getTenantSlug() {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -163,7 +114,7 @@ async function getTenantSlug() {
  */
 export default async function DashboardPage() {
     const stats = await getDashboardStats()
-    const recentOrders = await getRecentOrders()
+
     const tenantSlug = await getTenantSlug()
 
     const STATS = [
@@ -179,12 +130,7 @@ export default async function DashboardPage() {
             icon: FolderOpen,
             trend: null,
         },
-        {
-            label: "Bugünkü Sipariş",
-            value: stats?.todayOrders.toString() || "0",
-            icon: ShoppingCart,
-            trend: stats?.weekOrders ? `${stats.weekOrders} bu hafta` : null,
-        },
+
         {
             label: "Vitrin Bağlantısı",
             value: tenantSlug,
@@ -235,12 +181,7 @@ export default async function DashboardPage() {
                             ) : (
                                 <div className="text-2xl font-bold">{stat.value}</div>
                             )}
-                            {stat.trend && (
-                                <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-                                    <TrendingUp className="h-3 w-3" />
-                                    {stat.trend}
-                                </p>
-                            )}
+
                         </CardContent>
                     </Card>
                 ))}
@@ -274,39 +215,7 @@ export default async function DashboardPage() {
                     </CardContent>
                 </Card>
 
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="text-lg">Son Siparişler</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        {recentOrders.length > 0 ? (
-                            <div className="space-y-3">
-                                {recentOrders.map((order: { id: string; created_at: string; cart_data?: { total?: number } }) => (
-                                    <div
-                                        key={order.id}
-                                        className="flex items-center justify-between text-sm"
-                                    >
-                                        <span className="text-muted-foreground">
-                                            {new Date(order.created_at).toLocaleString("tr-TR", {
-                                                dateStyle: "short",
-                                                timeStyle: "short",
-                                            })}
-                                        </span>
-                                        <span className="font-medium">
-                                            {order.cart_data?.total
-                                                ? `${order.cart_data.total.toLocaleString("tr-TR")} ₺`
-                                                : "WhatsApp Sipariş"}
-                                        </span>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <div className="text-sm text-muted-foreground text-center py-8">
-                                Henüz sipariş yok
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
+
             </div>
         </div>
     )

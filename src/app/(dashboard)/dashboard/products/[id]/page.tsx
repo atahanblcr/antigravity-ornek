@@ -53,7 +53,7 @@ export default async function ProductEditPage({ params }: PageProps) {
     // Kategorileri çek
     const { data: categories } = await supabase
         .from("categories")
-        .select("id, name")
+        .select("id, name, attribute_schema")
         .eq("tenant_id", product.tenant_id)
         .eq("is_active", true)
         .is("deleted_at", null)

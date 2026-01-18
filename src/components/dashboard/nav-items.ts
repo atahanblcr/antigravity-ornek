@@ -10,6 +10,5 @@ export const NAV_ITEMS = [
     { href: "/dashboard", label: "Genel Bakış", icon: LayoutDashboard },
     { href: "/dashboard/products", label: "Ürünler", icon: Package },
     { href: "/dashboard/categories", label: "Kategoriler", icon: FolderOpen },
-    { href: "/dashboard/orders", label: "Siparişler", icon: ShoppingCart },
     { href: "/dashboard/settings", label: "Ayarlar", icon: Settings },
 ]
